@@ -470,15 +470,19 @@ def swab_delete(swab_id: int):
     return redirect(url_for("swabs"))
 
 
-# --- Machines page (GET pubblico, POST protetto) ---
-@app.route("/machines", methods=["GET", "POST"])
-def machines():
+# --- Machines page redirect (legacy) ---
+@app.route("/machines")
+def machines_redirect():
+    return redirect(url_for("admin_machines"))
+
+
+# --- Admin machines ---
+@app.route("/admin/machines", methods=["GET", "POST"])
+@require_admin
+def admin_machines():
     init_db()
 
     if request.method == "POST":
-        if not is_logged_in():
-            return redirect(url_for("login", next=url_for("machines")))
-
         action = request.form.get("action", "")
         name = (request.form.get("name") or "").strip()
         mid = (request.form.get("id") or "").strip()
@@ -487,7 +491,7 @@ def machines():
             if action == "add":
                 if not name:
                     flash("Nome macchina obbligatorio.", "error")
-                    return redirect(url_for("machines"))
+                    return redirect(url_for("admin_machines"))
                 try:
                     con.execute("INSERT INTO machines (name) VALUES (?)", (name,))
                     con.commit()
@@ -500,7 +504,7 @@ def machines():
                     machine_id = int(mid)
                 except Exception:
                     flash("ID macchina non valido.", "error")
-                    return redirect(url_for("machines"))
+                    return redirect(url_for("admin_machines"))
 
                 in_use = con.execute(
                     "SELECT 1 FROM swab_state WHERE machine_id=? LIMIT 1",
@@ -515,11 +519,11 @@ def machines():
             else:
                 flash("Azione non valida.", "error")
 
-        return redirect(url_for("machines"))
+        return redirect(url_for("admin_machines"))
 
     with connect() as con:
         ms = list_machines(con)
-    return render_template("machines.html", machines=ms)
+    return render_template("admin_machines.html", machines=ms)
 
 
 # --- Scanning pages (public) ---
