@@ -154,12 +154,12 @@
 <body>
   <div class="nav">
     <a class="{{ 'active' if request.path.startswith('/swabs') or request.path=='/' else '' }}" href="{{ url_for('swabs') }}">Tamponi</a>
-    <a class="{{ 'active' if request.path.startswith('/machines') else '' }}" href="{{ url_for('machines') }}">Macchine</a>
     <a class="{{ 'active' if request.path == '/scan' else '' }}" href="{{ url_for('scan') }}">Scansione</a>
     <a class="{{ 'active' if request.path.startswith('/scan-camera') else '' }}" href="{{ url_for('scan_camera') }}">Scan Camera</a>
     <a class="{{ 'active' if request.path.startswith('/history') else '' }}" href="{{ url_for('history') }}">Storico</a>
 
     {% if is_admin %}
+      <a class="{{ 'active' if request.path.startswith('/admin') else '' }}" href="{{ url_for('admin_machines') }}">Pannello di controllo</a>
       <a href="{{ url_for('logout') }}">Logout</a>
     {% else %}
       <a href="{{ url_for('login', next=request.path) }}">Login</a>
