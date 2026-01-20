@@ -28,7 +28,7 @@
       z-index:10;
 
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content: flex-start;
     }
     .nav a{
       padding:10px 12px;
@@ -43,6 +43,14 @@
       max-width: 220px;
     }
     .nav a.active{ color:var(--text); background:rgba(255,255,255,.10); }
+    .nav a.nav-auth{
+      margin-left:auto;
+      flex: 0 0 auto;
+      font-size:12px;
+      padding:6px 12px;
+      border-radius:999px;
+      max-width:none;
+    }
 
     .card{
       background:var(--card);
@@ -160,11 +168,9 @@
 
     {% if is_admin %}
       <a class="{{ 'active' if request.path == '/admin' else '' }}" href="{{ url_for('admin_dashboard') }}">Pannello di controllo</a>
-      <a class="{{ 'active' if request.path.startswith('/admin/swabs') else '' }}" href="{{ url_for('admin_swabs') }}">Admin tamponi</a>
-      <a class="{{ 'active' if request.path.startswith('/admin/machines') else '' }}" href="{{ url_for('admin_machines') }}">Admin macchine</a>
-      <a href="{{ url_for('logout') }}">Logout</a>
+      <a class="nav-auth" href="{{ url_for('logout') }}">Logout</a>
     {% else %}
-      <a href="{{ url_for('login', next=request.path) }}">Login</a>
+      <a class="nav-auth" href="{{ url_for('login', next=request.path) }}">Login</a>
     {% endif %}
   </div>
 
