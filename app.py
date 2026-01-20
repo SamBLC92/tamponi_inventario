@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List, Callable
+from typing import Optional, Dict, Any, List, Callable, Tuple
 from functools import wraps
 import secrets
 import hmac
@@ -333,22 +333,33 @@ def swabs():
         return redirect(url_for("swabs"))
 
     # GET pubblico
+    query = (request.args.get("q") or "").strip()
+    like_query = f"%{query}%"
+
     with connect() as con:
-        rows = con.execute(
-            """
+        sql = """
             SELECT s.id, s.sku, s.name,
                    COALESCE(st.in_stock, 1) AS in_stock,
                    COALESCE(st.updated_at, s.created_at) AS updated_at,
                    st.machine_id AS machine_id,
+                   mc.name AS machine_name,
 
                    (SELECT mv.ts FROM movements mv WHERE mv.swab_id=s.id AND mv.action='TAKE' ORDER BY mv.ts DESC LIMIT 1) AS last_take_ts,
-                   (SELECT mv.ts FROM movements mv WHERE mv.swab_id=s.id AND mv.action='RETURN' ORDER BY mv.ts DESC LIMIT 1) AS last_return_ts,
-                   (SELECT mc.name FROM machines mc WHERE mc.id = st.machine_id) AS machine_name
+                   (SELECT mv.ts FROM movements mv WHERE mv.swab_id=s.id AND mv.action='RETURN' ORDER BY mv.ts DESC LIMIT 1) AS last_return_ts
             FROM swabs s
             LEFT JOIN swab_state st ON st.swab_id = s.id
-            ORDER BY s.name COLLATE NOCASE
+            LEFT JOIN machines mc ON mc.id = st.machine_id
+        """
+        params: Tuple[Any, ...] = ()
+        if query:
+            sql += """
+            WHERE s.name LIKE ? COLLATE NOCASE
+               OR mc.name LIKE ? COLLATE NOCASE
             """
-        ).fetchall()
+            params = (like_query, like_query)
+        sql += "ORDER BY s.name COLLATE NOCASE"
+
+        rows = con.execute(sql, params).fetchall()
 
         enriched: List[Dict[str, Any]] = []
         for r in rows:
@@ -373,7 +384,12 @@ def swabs():
                 "machine_name": r["machine_name"],
             })
 
-    return render_template("swabs.html", rows=enriched, global_max_days=GLOBAL_MAX_DAYS)
+    return render_template(
+        "swabs.html",
+        rows=enriched,
+        global_max_days=GLOBAL_MAX_DAYS,
+        q=query,
+    )
 
 
 @app.route("/history")
