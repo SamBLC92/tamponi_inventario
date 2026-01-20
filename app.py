@@ -61,7 +61,7 @@ def inject_auth():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    next_url = request.args.get("next") or url_for("admin_swabs")
+    next_url = request.args.get("next") or url_for("admin_dashboard")
     if request.method == "POST":
         pw = request.form.get("password", "")
         ok = hmac.compare_digest(pw, ADMIN_PASSWORD)
@@ -360,6 +360,12 @@ def swabs():
         global_max_days=GLOBAL_MAX_DAYS,
         q=query,
     )
+
+
+@app.route("/admin")
+@require_admin
+def admin_dashboard():
+    return render_template("admin_dashboard.html")
 
 
 @app.route("/admin/swabs", methods=["GET", "POST"])
