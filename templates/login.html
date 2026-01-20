@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card" style="max-width:520px; margin:0 auto;">
+    <h1>Login</h1>
+    <p class="muted">Inserisci la password per modificare tamponi e macchine.</p>
+
+    <form method="post">
+      <input type="hidden" name="next" value="{{ next_url }}" />
+      <label class="muted small">Password</label>
+      <input name="password" type="password" placeholder="Password" required />
+      <div style="margin-top:12px;">
+        <button type="submit">Accedi</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

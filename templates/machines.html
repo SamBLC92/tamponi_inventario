@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="grid grid-2">
+    <div class="card">
+      {% if is_admin %}
+        <h1>Nuova macchina</h1>
+        <form method="post">
+          <input type="hidden" name="action" value="add" />
+          <label class="muted small">Nome macchina</label>
+          <input name="name" placeholder="es. CNC 01" required />
+          <div style="margin-top:12px;">
+            <button type="submit">Aggiungi macchina</button>
+          </div>
+        </form>
+      {% else %}
+        <h1>Macchine</h1>
+        <p class="muted">Per aggiungere/eliminare serve il login.</p>
+        <a href="{{ url_for('login', next=request.path) }}"><span class="pill ok">Login</span></a>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h1>Lista macchine</h1>
+
+      <div class="table-wrap">
+        <table class="rtable">
+          <thead>
+            <tr>
+              <th>Macchina</th>
+              {% if is_admin %}<th>Azioni</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in machines %}
+              <tr>
+                <td data-label="Macchina"><strong>{{ m.name }}</strong></td>
+                {% if is_admin %}
+                <td data-label="Azioni">
+                  <form method="post" style="margin:0;">
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="id" value="{{ m.id }}" />
+                    <button type="submit" onclick="return confirm('Eliminare questa macchina?');">Elimina</button>
+                  </form>
+                </td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+            {% if machines|length == 0 %}
+              <tr><td colspan="{{ 2 if is_admin else 1 }}" class="muted">Nessuna macchina.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      <div class="muted small" style="margin-top:10px;">
+        Nota: non puoi eliminare una macchina se è associata a un tampone attualmente <strong>PRESO</strong>.
+      </div>
+    </div>
+  </div>
+{% endblock %}

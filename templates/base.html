@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title if title else "Tamponi - Barcode" }}</title>
+
+  <style>
+    :root{
+      --bg:#0b1020; --card:#111a33; --text:#e8ecff; --muted:#a9b2d6;
+      --ok:#4ade80; --warn:#fbbf24; --err:#fb7185; --line:#22305d;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text); }
+    .wrap{ margin:0 auto; padding:14px; }
+
+    a, a:visited, a:hover, a:active { text-decoration:none !important; color: inherit; }
+
+    .nav{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background:rgba(17,26,51,.65);
+      position:sticky; top:0;
+      backdrop-filter:blur(10px);
+      z-index:10;
+
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .nav a{
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      color:var(--muted);
+      background: rgba(255,255,255,.03);
+      white-space:nowrap;
+
+      flex: 1 1 140px;
+      text-align:center;
+      max-width: 220px;
+    }
+    .nav a.active{ color:var(--text); background:rgba(255,255,255,.10); }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      box-shadow:0 10px 25px rgba(0,0,0,.25);
+    }
+
+    h1{ font-size:20px; margin:0 0 10px; }
+    .muted{ color:var(--muted); }
+    .small{ font-size:12px; }
+
+    .grid{ display:grid; gap:14px; grid-template-columns:1fr; }
+    @media (min-width: 960px){
+      .grid-2{ grid-template-columns: 420px 1fr; }
+      .wrap{ padding:18px; }
+    }
+
+    .row{ display:grid; gap:10px; grid-template-columns:1fr; }
+    @media (min-width: 640px){
+      .row.cols-2{ grid-template-columns: 1fr 1fr; }
+    }
+
+    input, select, button{
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      outline:none;
+    }
+    button{
+      cursor:pointer;
+      background:rgba(255,255,255,.07);
+      transition: transform .05s ease, background .15s ease;
+    }
+    button:hover{ background:rgba(255,255,255,.12); }
+    button:active{ transform: translateY(1px); }
+
+    .flash{ margin:10px 0 14px; }
+    .flash .msg{ padding:10px 12px; border-radius:12px; border:1px solid var(--line); }
+    .flash .msg.ok{ border-color: rgba(74,222,128,.35); color: var(--ok); }
+    .flash .msg.error{ border-color: rgba(251,113,133,.35); color: var(--err); }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px; border:1px solid var(--line);
+      font-size:12px; line-height:1; white-space:nowrap;
+    }
+    .pill.ok{ border-color: rgba(74,222,128,.35); color: var(--ok); }
+    .pill.warn{ border-color: rgba(251,191,36,.35); color: var(--warn); }
+    .pill.err{ border-color: rgba(251,113,133,.35); color: var(--err); }
+
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .table-wrap{ margin-top:10px; }
+    table.rtable{
+      width:100%;
+      border-collapse: collapse;
+    }
+    table.rtable th, table.rtable td{
+      padding:12px;
+      border-bottom:1px solid var(--line);
+      text-align:left;
+      vertical-align:middle;
+    }
+    table.rtable th{
+      color:var(--muted);
+      font-weight:600;
+      font-size:13px;
+    }
+    tr.row-warn td{ background: rgba(251,191,36,.08); }
+
+    @media (max-width: 760px){
+      table.rtable thead{ display:none; }
+      table.rtable, table.rtable tbody, table.rtable tr, table.rtable td{ display:block; width:100%; }
+      table.rtable tr{
+        border:1px solid var(--line);
+        border-radius:16px;
+        margin-bottom:12px;
+        overflow:hidden;
+        background: rgba(255,255,255,.02);
+      }
+      table.rtable td{
+        border-bottom:1px solid rgba(34,48,93,.7);
+        display:flex;
+        gap:10px;
+        align-items:flex-start;
+        justify-content:space-between;
+      }
+      table.rtable td:last-child{ border-bottom:none; }
+      table.rtable td::before{
+        content: attr(data-label);
+        color: var(--muted);
+        font-size:12px;
+        font-weight:600;
+        padding-right:12px;
+        flex: 0 0 38%;
+      }
+      table.rtable td > *{
+        flex: 1 1 auto;
+        text-align:right;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <a class="{{ 'active' if request.path.startswith('/swabs') or request.path=='/' else '' }}" href="{{ url_for('swabs') }}">Tamponi</a>
+    <a class="{{ 'active' if request.path.startswith('/machines') else '' }}" href="{{ url_for('machines') }}">Macchine</a>
+    <a class="{{ 'active' if request.path == '/scan' else '' }}" href="{{ url_for('scan') }}">Scansione</a>
+    <a class="{{ 'active' if request.path.startswith('/scan-camera') else '' }}" href="{{ url_for('scan_camera') }}">Scan Camera</a>
+    <a class="{{ 'active' if request.path.startswith('/history') else '' }}" href="{{ url_for('history') }}">Storico</a>
+
+    {% if is_admin %}
+      <a href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+      <a href="{{ url_for('login', next=request.path) }}">Login</a>
+    {% endif %}
+  </div>
+
+  <div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash">
+        {% for category, message in messages %}
+          <div class="msg {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>
