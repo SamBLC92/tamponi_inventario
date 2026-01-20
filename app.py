@@ -61,7 +61,7 @@ def inject_auth():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    next_url = request.args.get("next") or url_for("swabs")
+    next_url = request.args.get("next") or url_for("admin_swabs")
     if request.method == "POST":
         pw = request.form.get("password", "")
         ok = hmac.compare_digest(pw, ADMIN_PASSWORD)
@@ -294,48 +294,8 @@ def home():
 
 
 # --- Public pages ---
-@app.route("/swabs", methods=["GET", "POST"])
-def swabs():
-    init_db()
-
-    # POST (aggiunta) protetto
-    if request.method == "POST":
-        if not is_logged_in():
-            return redirect(url_for("login", next=url_for("swabs")))
-
-        action = request.form.get("action", "")
-        sku = (request.form.get("sku") or "").strip()
-        name = (request.form.get("name") or "").strip()
-
-        if action != "add":
-            flash("Azione non valida.", "error")
-            return redirect(url_for("swabs"))
-
-        with connect() as con:
-            if not sku or not name:
-                flash("SKU e Nome tampone sono obbligatori.", "error")
-                return redirect(url_for("swabs"))
-
-            ts = now_iso()
-            try:
-                cur = con.execute(
-                    "INSERT INTO swabs (sku, name, created_at) VALUES (?, ?, ?)",
-                    (sku, name, ts),
-                )
-                swab_id = cur.lastrowid
-                set_state(con, swab_id, 1, None)  # RESO, magazzino
-                con.commit()
-                ensure_label_png(sku)
-                flash(f"Tampone aggiunto: {sku}", "ok")
-            except sqlite3.IntegrityError:
-                flash(f"SKU già esistente: {sku}", "error")
-
-        return redirect(url_for("swabs"))
-
-    # GET pubblico
-    query = (request.args.get("q") or "").strip()
+def fetch_swabs(query: str) -> List[Dict[str, Any]]:
     like_query = f"%{query}%"
-
     with connect() as con:
         sql = """
             SELECT s.id, s.sku, s.name,
@@ -383,9 +343,64 @@ def swabs():
                 "last_return_ts": r["last_return_ts"],
                 "machine_name": r["machine_name"],
             })
+    return enriched
+
+
+@app.route("/swabs", methods=["GET"])
+def swabs():
+    init_db()
+
+    # GET pubblico
+    query = (request.args.get("q") or "").strip()
+    enriched = fetch_swabs(query)
 
     return render_template(
         "swabs.html",
+        rows=enriched,
+        global_max_days=GLOBAL_MAX_DAYS,
+        q=query,
+    )
+
+
+@app.route("/admin/swabs", methods=["GET", "POST"])
+@require_admin
+def admin_swabs():
+    init_db()
+
+    if request.method == "POST":
+        action = request.form.get("action", "")
+        sku = (request.form.get("sku") or "").strip()
+        name = (request.form.get("name") or "").strip()
+
+        if action != "add":
+            flash("Azione non valida.", "error")
+            return redirect(url_for("admin_swabs"))
+
+        with connect() as con:
+            if not sku or not name:
+                flash("SKU e Nome tampone sono obbligatori.", "error")
+                return redirect(url_for("admin_swabs"))
+
+            ts = now_iso()
+            try:
+                cur = con.execute(
+                    "INSERT INTO swabs (sku, name, created_at) VALUES (?, ?, ?)",
+                    (sku, name, ts),
+                )
+                swab_id = cur.lastrowid
+                set_state(con, swab_id, 1, None)  # RESO, magazzino
+                con.commit()
+                ensure_label_png(sku)
+                flash(f"Tampone aggiunto: {sku}", "ok")
+            except sqlite3.IntegrityError:
+                flash(f"SKU già esistente: {sku}", "error")
+
+        return redirect(url_for("admin_swabs"))
+
+    query = (request.args.get("q") or "").strip()
+    enriched = fetch_swabs(query)
+    return render_template(
+        "admin_swabs.html",
         rows=enriched,
         global_max_days=GLOBAL_MAX_DAYS,
         q=query,
@@ -426,7 +441,7 @@ def swab_edit(swab_id: int):
         sw = get_swab_by_id(con, swab_id)
         if not sw:
             flash("Tampone non trovato.", "error")
-            return redirect(url_for("swabs"))
+            return redirect(url_for("admin_swabs"))
 
         if request.method == "POST":
             new_name = (request.form.get("name") or "").strip()
@@ -441,7 +456,7 @@ def swab_edit(swab_id: int):
                 con.commit()
                 ensure_label_png(new_sku)
                 flash("Tampone aggiornato.", "ok")
-                return redirect(url_for("swabs"))
+                return redirect(url_for("admin_swabs"))
             except sqlite3.IntegrityError:
                 flash("SKU già esistente su un altro tampone.", "error")
 
@@ -456,18 +471,18 @@ def swab_delete(swab_id: int):
         sw = get_swab_by_id(con, swab_id)
         if not sw:
             flash("Tampone non trovato.", "error")
-            return redirect(url_for("swabs"))
+            return redirect(url_for("admin_swabs"))
 
         st = get_state(con, swab_id)
         if int(st["in_stock"]) == 0:
             flash("Non puoi eliminare un tampone che risulta PRESO. Rendilo prima.", "error")
-            return redirect(url_for("swabs"))
+            return redirect(url_for("admin_swabs"))
 
         con.execute("DELETE FROM swabs WHERE id=?", (swab_id,))
         con.commit()
 
     flash("Tampone eliminato.", "ok")
-    return redirect(url_for("swabs"))
+    return redirect(url_for("admin_swabs"))
 
 
 # --- Machines page redirect (legacy) ---

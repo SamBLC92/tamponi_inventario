@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="grid grid-2">
+    <div class="card">
+      <h1>Nuovo tampone</h1>
+      <form method="post">
+        <input type="hidden" name="action" value="add" />
+        <label class="muted small">SKU</label>
+        <input name="sku" placeholder="es. TB-0001" required />
+        <label class="muted small" style="margin-top:8px;">Nome tampone</label>
+        <input name="name" placeholder="es. Tampone A" required />
+        <div style="margin-top:12px;">
+          <button type="submit">Aggiungi tampone</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h1>Lista tamponi (Admin)</h1>
+
+      <form method="get" style="margin-top:10px;">
+        <label class="muted small" for="swab-search-admin">Cerca</label>
+        <input id="swab-search-admin" name="q" placeholder="Cerca per Nome o Macchina" value="{{ q }}" />
+      </form>
+
+      <div class="table-wrap" style="margin-top:12px;">
+        <table class="rtable">
+          <thead>
+            <tr>
+              <th>Tampone</th>
+              <th>SKU</th>
+              <th>Stato</th>
+              <th>Macchina</th>
+              <th>Ultimo PRESO</th>
+              <th>Ultimo RESO</th>
+              <th>Giorni uso</th>
+              <th>Barcode</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr class="{{ 'row-warn' if r['warn'] else '' }}">
+                <td data-label="Tampone"><strong>{{ r["name"] }}</strong></td>
+                <td data-label="SKU" class="mono muted">{{ r["sku"] }}</td>
+
+                <td data-label="Stato">
+                  {% if r["in_stock"] == 1 %}
+                    <span class="pill ok">RESO</span>
+                  {% else %}
+                    <span class="pill warn">PRESO</span>
+                  {% endif %}
+                  {% if r["warn"] %}
+                    <span class="pill warn">Oltre {{ global_max_days }} gg</span>
+                  {% endif %}
+                </td>
+
+                <td data-label="Macchina">
+                  {% if r["in_stock"] == 0 and r["machine_name"] %}
+                    <span class="pill warn">{{ r["machine_name"] }}</span>
+                  {% else %}
+                    <span class="muted small">Magazzino</span>
+                  {% endif %}
+                </td>
+
+                <td data-label="Ultimo PRESO" class="mono">
+                  {% if r["last_take_ts"] %}{{ r["last_take_ts"] | it_datetime }}{% else %}<span class="muted small">—</span>{% endif %}
+                </td>
+
+                <td data-label="Ultimo RESO" class="mono">
+                  {% if r["last_return_ts"] %}{{ r["last_return_ts"] | it_datetime }}{% else %}<span class="muted small">—</span>{% endif %}
+                </td>
+
+                <td data-label="Giorni uso">
+                  <span class="pill ok">Tot: {{ r["total_days"] }}</span>
+                  {% if r["in_stock"] == 0 and r["open_taken_ts"] %}
+                    <span class="pill warn">Ora: {{ r["current_days"] }}</span>
+                  {% endif %}
+                </td>
+
+                <td data-label="Barcode">
+                  <a href="{{ url_for('label_png', sku=r['sku']) }}" target="_blank">
+                    <span class="pill ok">Apri PNG</span>
+                  </a>
+                </td>
+
+                <td data-label="Azioni">
+                  <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                    <a href="{{ url_for('swab_edit', swab_id=r['id']) }}"><span class="pill ok">Modifica</span></a>
+
+                    <form method="post" action="{{ url_for('swab_delete', swab_id=r['id']) }}" style="margin:0;"
+                          onsubmit="return confirm('Eliminare definitivamente questo tampone?');">
+                      <button type="submit">Elimina</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+
+            {% if rows|length == 0 %}
+              <tr><td colspan="9" class="muted">Nessun tampone.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="muted small" style="margin-top:10px;">
+        Nota: non puoi eliminare un tampone se risulta <strong>PRESO</strong> (rendilo prima).
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -20,7 +20,6 @@
             <th>Ultimo RESO</th>
             <th>Giorni uso</th>
             <th>Barcode</th>
-            {% if is_admin %}<th>Azioni</th>{% endif %}
           </tr>
         </thead>
         <tbody>
@@ -68,24 +67,11 @@
                   <span class="pill ok">Apri PNG</span>
                 </a>
               </td>
-
-              {% if is_admin %}
-              <td data-label="Azioni">
-                <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                  <a href="{{ url_for('swab_edit', swab_id=r['id']) }}"><span class="pill ok">Modifica</span></a>
-
-                  <form method="post" action="{{ url_for('swab_delete', swab_id=r['id']) }}" style="margin:0;"
-                        onsubmit="return confirm('Eliminare definitivamente questo tampone?');">
-                    <button type="submit">Elimina</button>
-                  </form>
-                </div>
-              </td>
-              {% endif %}
             </tr>
           {% endfor %}
 
           {% if rows|length == 0 %}
-            <tr><td colspan="{{ 9 if is_admin else 8 }}" class="muted">Nessun tampone.</td></tr>
+            <tr><td colspan="8" class="muted">Nessun tampone.</td></tr>
           {% endif %}
         </tbody>
       </table>
