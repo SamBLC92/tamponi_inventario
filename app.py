@@ -21,7 +21,8 @@ ssl_file = "//HOMEASSISTANT/ssl/privkey.pem"
 ssl_cert = "//HOMEASSISTANT/ssl/fullchain.pem"
 
 # ✅ Soglia GLOBALE (uguale per tutti)
-GLOBAL_MAX_DAYS = 200
+DEFAULT_GLOBAL_MAX_DAYS = 200
+SETTINGS_KEY_GLOBAL_MAX_DAYS = "global_max_days"
 
 # ✅ Barcode: più allungato e meno alto (etichette più basse)
 BARCODE_MODULE_WIDTH = 0.30
@@ -195,9 +196,42 @@ def init_db() -> None:
             );
 
             CREATE INDEX IF NOT EXISTS idx_usage_days_swab ON usage_days(swab_id);
+
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
             """
         )
+        con.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (SETTINGS_KEY_GLOBAL_MAX_DAYS, str(DEFAULT_GLOBAL_MAX_DAYS)),
+        )
         con.commit()
+
+
+def get_setting(con: sqlite3.Connection, key: str) -> Optional[str]:
+    row = con.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    return row["value"] if row else None
+
+
+def set_setting(con: sqlite3.Connection, key: str, value: str) -> None:
+    con.execute(
+        "INSERT INTO settings (key, value) VALUES (?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        (key, value),
+    )
+
+
+def get_global_max_days(con: sqlite3.Connection) -> int:
+    raw = get_setting(con, SETTINGS_KEY_GLOBAL_MAX_DAYS)
+    try:
+        value = int(raw) if raw is not None else DEFAULT_GLOBAL_MAX_DAYS
+    except (TypeError, ValueError):
+        value = DEFAULT_GLOBAL_MAX_DAYS
+    if value <= 0:
+        value = DEFAULT_GLOBAL_MAX_DAYS
+    return value
 
 
 def get_swab_by_sku(con: sqlite3.Connection, sku: str) -> Optional[sqlite3.Row]:
@@ -297,6 +331,7 @@ def home():
 def fetch_swabs(query: str) -> List[Dict[str, Any]]:
     like_query = f"%{query}%"
     with connect() as con:
+        max_days = get_global_max_days(con)
         sql = """
             SELECT s.id, s.sku, s.name,
                    COALESCE(st.in_stock, 1) AS in_stock,
@@ -327,7 +362,7 @@ def fetch_swabs(query: str) -> List[Dict[str, Any]]:
             ot = open_taken_ts(con, swab_id)
             current_days = current_calendar_days(ot) if ot else 0
             total_days = total_unique_days(con, swab_id)
-            warn = (int(r["in_stock"]) == 0 and current_days > GLOBAL_MAX_DAYS)
+            warn = (int(r["in_stock"]) == 0 and current_days > max_days)
 
             enriched.append({
                 "id": swab_id,
@@ -353,11 +388,13 @@ def swabs():
     # GET pubblico
     query = (request.args.get("q") or "").strip()
     enriched = fetch_swabs(query)
+    with connect() as con:
+        max_days = get_global_max_days(con)
 
     return render_template(
         "swabs.html",
         rows=enriched,
-        global_max_days=GLOBAL_MAX_DAYS,
+        global_max_days=max_days,
         q=query,
     )
 
@@ -366,6 +403,30 @@ def swabs():
 @require_admin
 def admin_dashboard():
     return render_template("admin_dashboard.html")
+
+
+@app.route("/admin/settings", methods=["GET", "POST"])
+@require_admin
+def admin_settings():
+    init_db()
+    with connect() as con:
+        if request.method == "POST":
+            raw = (request.form.get("global_max_days") or "").strip()
+            try:
+                value = int(raw)
+                if value <= 0:
+                    raise ValueError("Valore non valido")
+            except ValueError:
+                flash("Inserisci un numero intero positivo per la soglia.", "error")
+                return redirect(url_for("admin_settings"))
+
+            set_setting(con, SETTINGS_KEY_GLOBAL_MAX_DAYS, str(value))
+            con.commit()
+            flash("Soglia globale aggiornata.", "ok")
+            return redirect(url_for("admin_settings"))
+
+        max_days = get_global_max_days(con)
+    return render_template("admin_settings.html", global_max_days=max_days)
 
 
 @app.route("/admin/swabs", methods=["GET", "POST"])
@@ -405,10 +466,12 @@ def admin_swabs():
 
     query = (request.args.get("q") or "").strip()
     enriched = fetch_swabs(query)
+    with connect() as con:
+        max_days = get_global_max_days(con)
     return render_template(
         "admin_swabs.html",
         rows=enriched,
-        global_max_days=GLOBAL_MAX_DAYS,
+        global_max_days=max_days,
         q=query,
     )
 
@@ -551,13 +614,17 @@ def admin_machines():
 @app.route("/scan")
 def scan():
     init_db()
-    return render_template("scan.html", global_max_days=GLOBAL_MAX_DAYS)
+    with connect() as con:
+        max_days = get_global_max_days(con)
+    return render_template("scan.html", global_max_days=max_days)
 
 
 @app.route("/scan-camera")
 def scan_camera():
     init_db()
-    return render_template("scan_camera.html", global_max_days=GLOBAL_MAX_DAYS)
+    with connect() as con:
+        max_days = get_global_max_days(con)
+    return render_template("scan_camera.html", global_max_days=max_days)
 
 
 @app.route("/api/machines")
@@ -668,7 +735,8 @@ def api_scan():
         ot = open_taken_ts(con, swab_id)
         current_days = current_calendar_days(ot) if ot else 0
         total_days = total_unique_days(con, swab_id)
-        warn = (new_in_stock == 0 and current_days > GLOBAL_MAX_DAYS)
+        max_days = get_global_max_days(con)
+        warn = (new_in_stock == 0 and current_days > max_days)
 
         # macchina corrente (solo se preso)
         st2 = get_state(con, swab_id)
@@ -691,7 +759,7 @@ def api_scan():
             "added_unique_days": added_unique_days,
             "current_days": current_days,
             "total_days": total_days,
-            "max_days": GLOBAL_MAX_DAYS,
+            "max_days": max_days,
             "warn": warn,
         })
 
