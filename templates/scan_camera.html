@@ -204,29 +204,39 @@
     const html5QrCode = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 320, height: 140 }, rememberLastUsedCamera: true };
 
-    Html5Qrcode.getCameras().then(cameras => {
-      if(!cameras || cameras.length === 0){
-        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Nessuna fotocamera trovata.</span></div>`;
-        return;
-      }
-      const backCam = cameras.find(c => /back|rear|environment/i.test(c.label));
-      const camId = (backCam || cameras[0]).id;
+    const onSuccess = (decodedText) => {
+      const sku = (decodedText || "").trim();
+      if(!sku) return;
+      if(!shouldAccept()) return;
+      handleDecoded(sku);
+    };
+    const onError = (_err) => {};
 
-      html5QrCode.start(
-        camId,
-        config,
-        (decodedText) => {
-          const sku = (decodedText || "").trim();
-          if(!sku) return;
-          if(!shouldAccept()) return;
-          handleDecoded(sku);
-        },
-        (_err) => {}
-      ).catch(e => {
-        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Impossibile avviare la camera: ${e}</span></div>`;
+    html5QrCode.start(
+      { facingMode: "environment" },
+      config,
+      onSuccess,
+      onError
+    ).catch(() => {
+      Html5Qrcode.getCameras().then(cameras => {
+        if(!cameras || cameras.length === 0){
+          resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Nessuna fotocamera trovata.</span></div>`;
+          return;
+        }
+        const backCam = cameras.find(c => /back|rear|environment/i.test(c.label));
+        const camId = (backCam || cameras[0]).id;
+
+        html5QrCode.start(
+          camId,
+          config,
+          onSuccess,
+          onError
+        ).catch(e => {
+          resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Impossibile avviare la camera: ${e}</span></div>`;
+        });
+      }).catch(e => {
+        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Errore camere: ${e}</span></div>`;
       });
-    }).catch(e => {
-      resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Errore camere: ${e}</span></div>`;
     });
   </script>
 {% endblock %}
