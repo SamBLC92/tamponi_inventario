@@ -102,9 +102,38 @@
     button:active{ transform: translateY(1px); }
 
     .flash{ margin:10px 0 14px; }
-    .flash .msg{ padding:10px 12px; border-radius:12px; border:1px solid var(--line); }
+    .flash .msg{
+      position:relative;
+      padding:10px 40px 10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      transition: opacity .2s ease, transform .2s ease, max-height .2s ease, margin .2s ease, padding .2s ease;
+      overflow:hidden;
+    }
     .flash .msg.ok{ border-color: rgba(74,222,128,.35); color: var(--ok); }
     .flash .msg.error{ border-color: rgba(251,113,133,.35); color: var(--err); }
+    .flash .msg.dismissed{
+      opacity:0;
+      transform: translateY(-4px);
+      max-height:0;
+      margin:0;
+      padding:0 40px 0 12px;
+      border-width:0;
+    }
+    .flash .flash-close{
+      position:absolute;
+      top:6px;
+      right:6px;
+      width:auto;
+      padding:2px 8px;
+      border-radius:10px;
+      border:1px solid transparent;
+      background:rgba(255,255,255,.08);
+      color:inherit;
+      font-size:16px;
+      line-height:1;
+    }
+    .flash .flash-close:hover{ background:rgba(255,255,255,.18); }
 
     .pill{
       display:inline-flex; align-items:center; gap:6px;
@@ -188,7 +217,10 @@
       {% if messages %}
       <div class="flash">
         {% for category, message in messages %}
-          <div class="msg {{ category }}">{{ message }}</div>
+          <div class="msg {{ category }}">
+            {{ message }}
+            <button class="flash-close" aria-label="Chiudi">×</button>
+          </div>
         {% endfor %}
       </div>
       {% endif %}
@@ -196,5 +228,28 @@
 
     {% block content %}{% endblock %}
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const flashMessages = document.querySelectorAll('.flash .msg');
+
+      const dismissMessage = (msg) => {
+        if (!msg || msg.classList.contains('dismissed')) {
+          return;
+        }
+        msg.classList.add('dismissed');
+        window.setTimeout(() => {
+          msg.remove();
+        }, 250);
+      };
+
+      flashMessages.forEach((msg) => {
+        const button = msg.querySelector('.flash-close');
+        if (button) {
+          button.addEventListener('click', () => dismissMessage(msg));
+        }
+        window.setTimeout(() => dismissMessage(msg), 5000);
+      });
+    });
+  </script>
 </body>
 </html>
