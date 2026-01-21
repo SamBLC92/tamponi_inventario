@@ -4,8 +4,10 @@
     <h1>Lista tamponi</h1>
 
     <form method="get" style="margin-top:10px;">
-      <label class="muted small" for="swab-search">Cerca</label>
-      <input id="swab-search" name="q" placeholder="Cerca per Nome o Macchina" value="{{ q }}" />
+      <div class="swab-search-row">
+        <label class="muted small" for="swab-search">Cerca</label>
+        <input id="swab-search" class="swab-search" name="q" placeholder="Cerca per Nome o Macchina" value="{{ q }}" />
+      </div>
     </form>
 
     <div class="table-wrap" style="margin-top:12px;">
