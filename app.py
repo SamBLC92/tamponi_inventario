@@ -362,7 +362,7 @@ def fetch_swabs(query: str) -> List[Dict[str, Any]]:
             ot = open_taken_ts(con, swab_id)
             current_days = current_calendar_days(ot) if ot else 0
             total_days = total_unique_days(con, swab_id)
-            warn = (int(r["in_stock"]) == 0 and current_days > max_days)
+            warn = current_days > max_days or total_days > max_days
 
             enriched.append({
                 "id": swab_id,
@@ -736,7 +736,7 @@ def api_scan():
         current_days = current_calendar_days(ot) if ot else 0
         total_days = total_unique_days(con, swab_id)
         max_days = get_global_max_days(con)
-        warn = (new_in_stock == 0 and current_days > max_days)
+        warn = current_days > max_days or total_days > max_days
 
         # macchina corrente (solo se preso)
         st2 = get_state(con, swab_id)
