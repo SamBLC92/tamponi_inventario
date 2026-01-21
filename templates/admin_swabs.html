@@ -86,7 +86,9 @@
 
                 <td data-label="Azioni">
                   <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                    <a href="{{ url_for('swab_edit', swab_id=r['id']) }}"><span class="pill ok">Modifica</span></a>
+                    <form method="get" action="{{ url_for('swab_edit', swab_id=r['id']) }}" style="margin:0;">
+                      <button type="submit">Modifica</button>
+                    </form>
 
                     <form method="post" action="{{ url_for('swab_delete', swab_id=r['id']) }}" style="margin:0;"
                           onsubmit="return confirm('Eliminare definitivamente questo tampone?');">
