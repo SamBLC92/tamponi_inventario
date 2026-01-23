@@ -40,7 +40,7 @@
           </thead>
           <tbody>
             {% for r in rows %}
-            <tr class="{{ 'row-warn' if r['warning'] else '' }}">
+            <tr class="{% if r['alarm'] %}row-alarm{% elif r['warning'] %}row-warn{% endif %}">
                 <td data-label="Tampone"><strong>{{ r["name"] }}</strong></td>
                 <td data-label="SKU" class="mono muted">{{ r["sku"] }}</td>
 
@@ -51,9 +51,9 @@
                     <span class="pill warn">PRESO</span>
                   {% endif %}
                 {% if r["alarm"] %}
-                  <span class="pill err">Allarme oltre {{ global_alarm_days }} gg</span>
+                  <span class="pill err">Allarme: oltre {{ global_alarm_days }} gg superati</span>
                 {% elif r["warning"] %}
-                  <span class="pill warn">Avviso oltre {{ global_warn_days }} gg</span>
+                  <span class="pill warn">Avviso: oltre {{ global_warn_days }} gg in scadenza</span>
                 {% endif %}
                 </td>
 
