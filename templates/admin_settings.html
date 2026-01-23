@@ -2,17 +2,27 @@
 {% block content %}
   <div class="card">
     <h1>Impostazioni</h1>
-    <p class="muted">Aggiorna la soglia globale di avviso per i tamponi in uso.</p>
+    <p class="muted">Aggiorna le soglie globali di avviso e allarme per i tamponi in uso.</p>
 
     <form method="post" style="margin-top:12px;">
-      <label class="muted small" for="global-max-days">Soglia globale (giorni)</label>
+      <label class="muted small" for="global-warn-days">Soglia globale avviso (giorni)</label>
       <input
-        id="global-max-days"
-        name="global_max_days"
+        id="global-warn-days"
+        name="global_warn_days"
         type="number"
         min="1"
         step="1"
-        value="{{ global_max_days }}"
+        value="{{ global_warn_days }}"
+        required
+      />
+      <label class="muted small" for="global-alarm-days" style="margin-top:10px;">Soglia globale allarme (giorni)</label>
+      <input
+        id="global-alarm-days"
+        name="global_alarm_days"
+        type="number"
+        min="1"
+        step="1"
+        value="{{ global_alarm_days }}"
         required
       />
       <div style="margin-top:12px;">
