@@ -4,7 +4,8 @@
     <div class="card">
       <h1>Scansione</h1>
       <p class="muted">
-        Soglia globale avviso: <span class="pill warn">{{ global_max_days }} giorni</span>
+        Soglia globale avviso: <span class="pill warn">{{ global_warn_days }} giorni</span>
+        <span style="margin-left:6px;">Soglia globale allarme: <span class="pill err">{{ global_alarm_days }} giorni</span></span>
       </p>
 
       <div class="row cols-2" style="margin-top:10px;">
@@ -108,7 +109,9 @@
       const stato = j.in_stock ? "RESO" : "PRESO";
       const az = (j.action === "TAKE") ? "PRESO" : "RESO";
 
-      const warn = j.warn ? ` <span class="pill warn">Oltre ${j.max_days} gg</span>` : "";
+      const warn = j.alarm
+        ? ` <span class="pill err">Allarme oltre ${j.alarm_days} gg</span>`
+        : (j.warning ? ` <span class="pill warn">Avviso oltre ${j.warn_days} gg</span>` : "");
       const infoDays = j.in_stock
         ? (j.days_session ? ` <span class="pill ok">Sessione: ${j.days_session} gg</span>` : "")
         : ` <span class="pill warn">Fuori da: ${j.current_days} gg</span>`;

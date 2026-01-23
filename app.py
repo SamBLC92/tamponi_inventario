@@ -20,9 +20,11 @@ LABELS_DIR = os.path.join(APP_DIR, "labels")
 ssl_file = "//HOMEASSISTANT/ssl/privkey.pem"
 ssl_cert = "//HOMEASSISTANT/ssl/fullchain.pem"
 
-# ✅ Soglia GLOBALE (uguale per tutti)
-DEFAULT_GLOBAL_MAX_DAYS = 200
-SETTINGS_KEY_GLOBAL_MAX_DAYS = "global_max_days"
+# ✅ Soglie GLOBALI (uguali per tutti)
+DEFAULT_GLOBAL_WARN_DAYS = 180
+DEFAULT_GLOBAL_ALARM_DAYS = 200
+SETTINGS_KEY_WARN_DAYS = "global_warn_days"
+SETTINGS_KEY_ALARM_DAYS = "global_alarm_days"
 
 # ✅ Barcode: più allungato e meno alto (etichette più basse)
 BARCODE_MODULE_WIDTH = 0.30
@@ -205,7 +207,11 @@ def init_db() -> None:
         )
         con.execute(
             "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
-            (SETTINGS_KEY_GLOBAL_MAX_DAYS, str(DEFAULT_GLOBAL_MAX_DAYS)),
+            (SETTINGS_KEY_WARN_DAYS, str(DEFAULT_GLOBAL_WARN_DAYS)),
+        )
+        con.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (SETTINGS_KEY_ALARM_DAYS, str(DEFAULT_GLOBAL_ALARM_DAYS)),
         )
         con.commit()
 
@@ -223,15 +229,23 @@ def set_setting(con: sqlite3.Connection, key: str, value: str) -> None:
     )
 
 
-def get_global_max_days(con: sqlite3.Connection) -> int:
-    raw = get_setting(con, SETTINGS_KEY_GLOBAL_MAX_DAYS)
+def get_positive_setting(con: sqlite3.Connection, key: str, default: int) -> int:
+    raw = get_setting(con, key)
     try:
-        value = int(raw) if raw is not None else DEFAULT_GLOBAL_MAX_DAYS
+        value = int(raw) if raw is not None else default
     except (TypeError, ValueError):
-        value = DEFAULT_GLOBAL_MAX_DAYS
+        value = default
     if value <= 0:
-        value = DEFAULT_GLOBAL_MAX_DAYS
+        value = default
     return value
+
+
+def get_global_warn_days(con: sqlite3.Connection) -> int:
+    return get_positive_setting(con, SETTINGS_KEY_WARN_DAYS, DEFAULT_GLOBAL_WARN_DAYS)
+
+
+def get_global_alarm_days(con: sqlite3.Connection) -> int:
+    return get_positive_setting(con, SETTINGS_KEY_ALARM_DAYS, DEFAULT_GLOBAL_ALARM_DAYS)
 
 
 def get_swab_by_sku(con: sqlite3.Connection, sku: str) -> Optional[sqlite3.Row]:
@@ -331,7 +345,8 @@ def home():
 def fetch_swabs(query: str) -> List[Dict[str, Any]]:
     like_query = f"%{query}%"
     with connect() as con:
-        max_days = get_global_max_days(con)
+        warn_days = get_global_warn_days(con)
+        alarm_days = get_global_alarm_days(con)
         sql = """
             SELECT s.id, s.sku, s.name,
                    COALESCE(st.in_stock, 1) AS in_stock,
@@ -362,7 +377,8 @@ def fetch_swabs(query: str) -> List[Dict[str, Any]]:
             ot = open_taken_ts(con, swab_id)
             current_days = current_calendar_days(ot) if ot else 0
             total_days = total_unique_days(con, swab_id)
-            warn = current_days > max_days or total_days > max_days
+            is_warning = current_days > warn_days or total_days > warn_days
+            is_alarm = current_days > alarm_days or total_days > alarm_days
 
             enriched.append({
                 "id": swab_id,
@@ -373,7 +389,8 @@ def fetch_swabs(query: str) -> List[Dict[str, Any]]:
                 "open_taken_ts": ot,
                 "current_days": current_days,
                 "total_days": total_days,
-                "warn": warn,
+                "warning": is_warning,
+                "alarm": is_alarm,
                 "last_take_ts": r["last_take_ts"],
                 "last_return_ts": r["last_return_ts"],
                 "machine_name": r["machine_name"],
@@ -389,12 +406,14 @@ def swabs():
     query = (request.args.get("q") or "").strip()
     enriched = fetch_swabs(query)
     with connect() as con:
-        max_days = get_global_max_days(con)
+        warn_days = get_global_warn_days(con)
+        alarm_days = get_global_alarm_days(con)
 
     return render_template(
         "swabs.html",
         rows=enriched,
-        global_max_days=max_days,
+        global_warn_days=warn_days,
+        global_alarm_days=alarm_days,
         q=query,
     )
 
@@ -411,22 +430,32 @@ def admin_settings():
     init_db()
     with connect() as con:
         if request.method == "POST":
-            raw = (request.form.get("global_max_days") or "").strip()
+            raw_warn = (request.form.get("global_warn_days") or "").strip()
+            raw_alarm = (request.form.get("global_alarm_days") or "").strip()
             try:
-                value = int(raw)
-                if value <= 0:
+                warn_value = int(raw_warn)
+                alarm_value = int(raw_alarm)
+                if warn_value <= 0 or alarm_value <= 0:
                     raise ValueError("Valore non valido")
+                if warn_value >= alarm_value:
+                    raise ValueError("Soglie non valide")
             except ValueError:
-                flash("Inserisci un numero intero positivo per la soglia.", "error")
+                flash("Inserisci soglie valide (interi positivi, avviso < allarme).", "error")
                 return redirect(url_for("admin_settings"))
 
-            set_setting(con, SETTINGS_KEY_GLOBAL_MAX_DAYS, str(value))
+            set_setting(con, SETTINGS_KEY_WARN_DAYS, str(warn_value))
+            set_setting(con, SETTINGS_KEY_ALARM_DAYS, str(alarm_value))
             con.commit()
-            flash("Soglia globale aggiornata.", "ok")
+            flash("Soglie globali aggiornate.", "ok")
             return redirect(url_for("admin_settings"))
 
-        max_days = get_global_max_days(con)
-    return render_template("admin_settings.html", global_max_days=max_days)
+        warn_days = get_global_warn_days(con)
+        alarm_days = get_global_alarm_days(con)
+    return render_template(
+        "admin_settings.html",
+        global_warn_days=warn_days,
+        global_alarm_days=alarm_days,
+    )
 
 
 @app.route("/admin/swabs", methods=["GET", "POST"])
@@ -467,11 +496,13 @@ def admin_swabs():
     query = (request.args.get("q") or "").strip()
     enriched = fetch_swabs(query)
     with connect() as con:
-        max_days = get_global_max_days(con)
+        warn_days = get_global_warn_days(con)
+        alarm_days = get_global_alarm_days(con)
     return render_template(
         "admin_swabs.html",
         rows=enriched,
-        global_max_days=max_days,
+        global_warn_days=warn_days,
+        global_alarm_days=alarm_days,
         q=query,
     )
 
@@ -615,16 +646,26 @@ def admin_machines():
 def scan():
     init_db()
     with connect() as con:
-        max_days = get_global_max_days(con)
-    return render_template("scan.html", global_max_days=max_days)
+        warn_days = get_global_warn_days(con)
+        alarm_days = get_global_alarm_days(con)
+    return render_template(
+        "scan.html",
+        global_warn_days=warn_days,
+        global_alarm_days=alarm_days,
+    )
 
 
 @app.route("/scan-camera")
 def scan_camera():
     init_db()
     with connect() as con:
-        max_days = get_global_max_days(con)
-    return render_template("scan_camera.html", global_max_days=max_days)
+        warn_days = get_global_warn_days(con)
+        alarm_days = get_global_alarm_days(con)
+    return render_template(
+        "scan_camera.html",
+        global_warn_days=warn_days,
+        global_alarm_days=alarm_days,
+    )
 
 
 @app.route("/api/machines")
@@ -735,8 +776,10 @@ def api_scan():
         ot = open_taken_ts(con, swab_id)
         current_days = current_calendar_days(ot) if ot else 0
         total_days = total_unique_days(con, swab_id)
-        max_days = get_global_max_days(con)
-        warn = current_days > max_days or total_days > max_days
+        warn_days = get_global_warn_days(con)
+        alarm_days = get_global_alarm_days(con)
+        is_warning = current_days > warn_days or total_days > warn_days
+        is_alarm = current_days > alarm_days or total_days > alarm_days
 
         # macchina corrente (solo se preso)
         st2 = get_state(con, swab_id)
@@ -759,8 +802,10 @@ def api_scan():
             "added_unique_days": added_unique_days,
             "current_days": current_days,
             "total_days": total_days,
-            "max_days": max_days,
-            "warn": warn,
+            "warn_days": warn_days,
+            "alarm_days": alarm_days,
+            "warning": is_warning,
+            "alarm": is_alarm,
         })
 
 
