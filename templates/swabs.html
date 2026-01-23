@@ -21,7 +21,6 @@
             <th>Ultimo PRESO</th>
             <th>Ultimo RESO</th>
             <th>Giorni uso</th>
-            <th>Barcode</th>
           </tr>
         </thead>
         <tbody>
@@ -63,17 +62,11 @@
                   <span class="pill warn">Ora: {{ r["current_days"] }}</span>
                 {% endif %}
               </td>
-
-              <td data-label="Barcode">
-                <a href="{{ url_for('label_png', sku=r['sku']) }}" target="_blank">
-                  <span class="pill ok">Apri PNG</span>
-                </a>
-              </td>
             </tr>
           {% endfor %}
 
           {% if rows|length == 0 %}
-            <tr><td colspan="8" class="muted">Nessun tampone.</td></tr>
+            <tr><td colspan="7" class="muted">Nessun tampone.</td></tr>
           {% endif %}
         </tbody>
       </table>
