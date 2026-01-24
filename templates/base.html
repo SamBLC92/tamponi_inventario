@@ -147,11 +147,17 @@
     .pill{
       display:inline-flex; align-items:center; gap:6px;
       padding:6px 10px; border-radius:999px; border:1px solid var(--line);
-      font-size:12px; line-height:1; white-space:nowrap;
+      font-size:12px; line-height:1; white-space:nowrap; vertical-align:middle;
     }
     .pill.ok{ border-color: rgba(74,222,128,.35); color: var(--ok); }
     .pill.warn{ border-color: rgba(251,191,36,.35); color: var(--warn); }
     .pill.err{ border-color: rgba(251,113,133,.35); color: var(--err); }
+    .pill-row{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
+    }
 
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
