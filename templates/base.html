@@ -30,6 +30,17 @@
       flex-wrap: wrap;
       justify-content: flex-start;
     }
+    .nav-logo{
+      display:flex;
+      align-items:center;
+      margin-right:8px;
+      flex: 0 0 auto;
+    }
+    .nav-logo img{
+      height:30px;
+      width:auto;
+      display:block;
+    }
     .nav a{
       padding:6px 10px;
       border:1px solid var(--line);
@@ -215,6 +226,9 @@
 </head>
 <body>
   <div class="nav">
+    <a class="nav-logo" href="{{ url_for('swabs') }}">
+      <img src="{{ url_for('static', filename='logo.svg') }}" alt="Logo">
+    </a>
     <a class="{{ 'active' if request.path.startswith('/swabs') or request.path=='/' else '' }}" href="{{ url_for('swabs') }}">Tamponi</a>
     <a class="{{ 'active' if request.path == '/scan' else '' }}" href="{{ url_for('scan') }}">Scansione</a>
     <a class="{{ 'active' if request.path.startswith('/scan-camera') else '' }}" href="{{ url_for('scan_camera') }}">Scan Camera</a>
