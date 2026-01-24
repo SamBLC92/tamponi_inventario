@@ -2,12 +2,26 @@
 
 {% block content %}
   <div class="card">
-    <h1>Pannello di controllo</h1>
-    <p class="muted">Gestione amministrativa di tamponi e macchine.</p>
-    <div class="row cols-2">
-      <a class="card" href="{{ url_for('admin_swabs') }}">Gestione tamponi</a>
-      <a class="card" href="{{ url_for('admin_machines') }}">Gestione macchine</a>
-      <a class="card" href="{{ url_for('admin_settings') }}">Impostazioni soglia</a>
+    <div class="card-body">
+      <h1 class="h4 mb-2">Pannello di controllo</h1>
+      <p class="text-secondary">Gestione amministrativa di tamponi e macchine.</p>
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <a class="card text-decoration-none h-100" href="{{ url_for('admin_swabs') }}">
+            <div class="card-body">Gestione tamponi</div>
+          </a>
+        </div>
+        <div class="col-12 col-md-6">
+          <a class="card text-decoration-none h-100" href="{{ url_for('admin_machines') }}">
+            <div class="card-body">Gestione macchine</div>
+          </a>
+        </div>
+        <div class="col-12 col-md-6">
+          <a class="card text-decoration-none h-100" href="{{ url_for('admin_settings') }}">
+            <div class="card-body">Impostazioni soglia</div>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}
