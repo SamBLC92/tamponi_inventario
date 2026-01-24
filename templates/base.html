@@ -259,7 +259,13 @@
 
     {% if is_admin %}
       <a class="{{ 'active' if request.path == '/admin' else '' }}" href="{{ url_for('admin_dashboard') }}">Pannello di controllo</a>
-      <a class="nav-auth" href="{{ url_for('logout') }}">Logout</a>
+      <a class="nav-auth" aria-label="Logout" href="{{ url_for('logout') }}">
+        <span class="nav-gear" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img" focusable="false">
+            <path d="M16 3h-5a2 2 0 0 0-2 2v4h2V5h5v14h-5v-4H9v4a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm-3.41 6.59L14 11l-1.41 1.41L15.17 15H5v2h10.17l-2.58 2.59L14 21l5-5-5-5Z"/>
+          </svg>
+        </span>
+      </a>
     {% else %}
       <a class="nav-auth" aria-label="Login" href="{{ url_for('login', next=request.path) }}">
         <span class="nav-gear" aria-hidden="true">
