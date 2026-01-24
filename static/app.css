@@ -1,0 +1,28 @@
+body {
+  background-color: #0b1020;
+}
+
+.navbar {
+  background-color: rgba(17, 26, 51, 0.9) !important;
+}
+
+.card {
+  background-color: #111a33;
+  border-color: #22305d;
+}
+
+.table thead th {
+  color: #a9b2d6;
+}
+
+.table .row-warn td {
+  background-color: rgba(251, 191, 36, 0.12) !important;
+}
+
+.table .row-alarm td {
+  background-color: rgba(251, 113, 133, 0.18) !important;
+}
+
+.swab-search {
+  max-width: 320px;
+}
