@@ -6,28 +6,32 @@
       <p class="text-secondary">Aggiorna le soglie globali per i tamponi in uso: avviso per giorni in scadenza e allarme per giorni superati.</p>
 
       <form method="post" class="mt-3">
-        <label class="form-label text-secondary small" for="global-warn-days">Soglia globale avviso (giorni in scadenza)</label>
-        <input
-          id="global-warn-days"
-          name="global_warn_days"
-          type="number"
-          class="form-control"
-          min="1"
-          step="1"
-          value="{{ global_warn_days }}"
-          required
-        />
-        <label class="form-label text-secondary small mt-3" for="global-alarm-days">Soglia globale allarme (giorni superati)</label>
-        <input
-          id="global-alarm-days"
-          name="global_alarm_days"
-          type="number"
-          class="form-control"
-          min="1"
-          step="1"
-          value="{{ global_alarm_days }}"
-          required
-        />
+        <div class="mb-3">
+          <label class="form-label text-secondary small" for="global-warn-days">Soglia globale avviso (giorni in scadenza)</label>
+          <input
+            id="global-warn-days"
+            name="global_warn_days"
+            type="number"
+            class="form-control"
+            min="1"
+            step="1"
+            value="{{ global_warn_days }}"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-secondary small" for="global-alarm-days">Soglia globale allarme (giorni superati)</label>
+          <input
+            id="global-alarm-days"
+            name="global_alarm_days"
+            type="number"
+            class="form-control"
+            min="1"
+            step="1"
+            value="{{ global_alarm_days }}"
+            required
+          />
+        </div>
         <div class="mt-3">
           <button type="submit" class="btn btn-primary">Salva impostazioni</button>
         </div>

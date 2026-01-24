@@ -7,10 +7,14 @@
           <h1 class="h4 mb-3">Nuovo tampone</h1>
           <form method="post">
             <input type="hidden" name="action" value="add" />
-            <label class="form-label text-secondary small">SKU</label>
-            <input name="sku" class="form-control" placeholder="es. TB-0001" required />
-            <label class="form-label text-secondary small mt-3">Nome tampone</label>
-            <input name="name" class="form-control" placeholder="es. Tampone A" required />
+            <div class="mb-3">
+              <label class="form-label text-secondary small">SKU</label>
+              <input name="sku" class="form-control" placeholder="es. TB-0001" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-secondary small">Nome tampone</label>
+              <input name="name" class="form-control" placeholder="es. Tampone A" required />
+            </div>
             <div class="mt-3">
               <button type="submit" class="btn btn-primary w-100">Aggiungi tampone</button>
             </div>
@@ -25,8 +29,10 @@
           <h1 class="h4 mb-3">Lista tamponi (Admin)</h1>
 
           <form method="get" class="mb-3">
-            <label class="form-label text-secondary small" for="swab-search-admin">Cerca</label>
-            <input id="swab-search-admin" class="form-control swab-search" name="q" placeholder="Cerca per Nome o Macchina" value="{{ q }}" />
+            <div class="mb-3">
+              <label class="form-label text-secondary small" for="swab-search-admin">Cerca</label>
+              <input id="swab-search-admin" class="form-control swab-search" name="q" placeholder="Cerca per Nome o Macchina" value="{{ q }}" />
+            </div>
           </form>
 
           <div class="table-responsive">
