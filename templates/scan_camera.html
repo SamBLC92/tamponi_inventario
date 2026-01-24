@@ -1,72 +1,63 @@
 {% extends "base.html" %}
 {% block content %}
-  <div class="row g-3">
-    <div class="col-12 col-lg-5">
-      <div class="card h-100">
-        <div class="card-body">
-          <h1 class="h4 mb-2">Scansione con fotocamera</h1>
-          <p class="text-secondary">
-            Soglie globali:
-            <span class="badge bg-warning text-dark">Avviso {{ global_warn_days }} gg in scadenza</span>
-            <span class="badge bg-danger ms-2">Allarme {{ global_alarm_days }} gg superati</span>
-          </p>
+  <div class="grid grid-2">
+    <div class="card">
+      <h1>Scansione con fotocamera</h1>
+      <p class="muted">
+        Soglie globali: <span class="pill warn">Avviso {{ global_warn_days }} gg in scadenza</span>
+        <span style="margin-left:6px;"><span class="pill err">Allarme {{ global_alarm_days }} gg superati</span></span>
+      </p>
 
-          <div class="row g-3 mt-1">
-            <div class="col-12 col-md-6">
-              <label class="form-label text-secondary small">Modalità</label>
-              <select id="mode" class="form-control">
-                <option value="TOGGLE" selected>TOGGLE (preso/reso)</option>
-                <option value="TAKE">PRESO (forza)</option>
-                <option value="RETURN">RESO (forza)</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="form-label text-secondary small">Cooldown letture</label>
-              <select id="cooldown" class="form-control">
-                <option value="1200" selected>1.2s</option>
-                <option value="2000">2s</option>
-                <option value="3000">3s</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="border rounded-3 overflow-hidden mt-3">
-            <div id="reader" class="w-100"></div>
-          </div>
-
-          <div id="result" class="mt-3"></div>
-          <div class="text-secondary small mt-2">
-            La fotocamera spesso richiede HTTPS (specialmente su iPhone).
-          </div>
+      <div class="row cols-2" style="margin-top:10px;">
+        <div>
+          <label class="muted small">Modalità</label>
+          <select id="mode">
+            <option value="TOGGLE" selected>TOGGLE (preso/reso)</option>
+            <option value="TAKE">PRESO (forza)</option>
+            <option value="RETURN">RESO (forza)</option>
+          </select>
         </div>
+        <div>
+          <label class="muted small">Cooldown letture</label>
+          <select id="cooldown">
+            <option value="1200" selected>1.2s</option>
+            <option value="2000">2s</option>
+            <option value="3000">3s</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; border:1px solid var(--line); border-radius: 18px; overflow:hidden;">
+        <div id="reader" style="width:100%;"></div>
+      </div>
+
+      <div id="result" style="margin-top:14px;"></div>
+      <div class="muted small" style="margin-top:10px;">
+        La fotocamera spesso richiede HTTPS (specialmente su iPhone).
       </div>
     </div>
 
-    <div class="col-12 col-lg-7">
-      <div class="card h-100">
-        <div class="card-body">
-          <h1 class="h4 mb-2">Ultimo esito</h1>
-          <div id="last" class="text-secondary">Nessuna scansione ancora.</div>
+    <div class="card">
+      <h1>Ultimo esito</h1>
+      <div id="last" class="muted">Nessuna scansione ancora.</div>
 
-          <div id="machineBox" class="border rounded-3 p-3 mt-3 d-none">
-            <div class="d-flex justify-content-between gap-3 align-items-center">
-              <strong>Seleziona macchina</strong>
-              <span class="text-secondary small" id="machineSku"></span>
-            </div>
+      <div id="machineBox" style="display:none; margin-top:14px; border:1px solid var(--line); border-radius:16px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+          <strong>Seleziona macchina</strong>
+          <span class="muted small" id="machineSku"></span>
+        </div>
 
-            <div class="mt-3">
-              <select id="machineSelect" class="form-control"></select>
-            </div>
+        <div style="margin-top:10px;">
+          <select id="machineSelect"></select>
+        </div>
 
-            <div class="mt-3 d-flex flex-column gap-2">
-              <button id="machineConfirm" class="btn btn-success">Conferma PRESO</button>
-              <button id="machineCancel" class="btn btn-outline-light">Annulla</button>
-            </div>
+        <div style="margin-top:10px;">
+          <button id="machineConfirm">Conferma PRESO</button>
+          <button id="machineCancel" style="margin-top:8px;">Annulla</button>
+        </div>
 
-            <div class="text-secondary small mt-2">
-              Se la lista è vuota, vai su <strong>Macchine</strong> e aggiungile.
-            </div>
-          </div>
+        <div class="muted small" style="margin-top:8px;">
+          Se la lista è vuota, vai su <strong>Macchine</strong> e aggiungile.
         </div>
       </div>
     </div>
@@ -89,7 +80,7 @@
     let pending = null;
 
     function pill(ok, text){
-      const cls = ok ? "badge bg-success" : "badge bg-danger";
+      const cls = ok ? "pill ok" : "pill err";
       return `<span class="${cls}">${text}</span>`;
     }
 
@@ -112,12 +103,12 @@
         opt.textContent = m.name;
         machineSelect.appendChild(opt);
       }
-      machineBox.classList.remove("d-none");
+      machineBox.style.display = "block";
     }
 
     function hideMachinePicker(){
       pending = null;
-      machineBox.classList.add("d-none");
+      machineBox.style.display = "none";
     }
 
     async function callScan(payload){
@@ -135,21 +126,21 @@
       const az = (j.action === "TAKE") ? "PRESO" : "RESO";
 
       const warn = j.alarm
-        ? ` <span class="badge bg-danger">Allarme: oltre ${j.alarm_days} gg superati</span>`
-        : (j.warning ? ` <span class="badge bg-warning text-dark">Avviso: oltre ${j.warn_days} gg in scadenza</span>` : "");
+        ? ` <span class="pill err">Allarme: oltre ${j.alarm_days} gg superati</span>`
+        : (j.warning ? ` <span class="pill warn">Avviso: oltre ${j.warn_days} gg in scadenza</span>` : "");
       const infoDays = j.in_stock
-        ? (j.days_session ? ` <span class="badge bg-success">Sessione: ${j.days_session} gg</span>` : "")
-        : ` <span class="badge bg-warning text-dark">Fuori da: ${j.current_days} gg</span>`;
+        ? (j.days_session ? ` <span class="pill ok">Sessione: ${j.days_session} gg</span>` : "")
+        : ` <span class="pill warn">Fuori da: ${j.current_days} gg</span>`;
 
       const machineInfo = (!j.in_stock && j.machine_name)
-        ? ` <span class="badge bg-warning text-dark">Macchina: ${j.machine_name}</span>`
-        : ` <span class="text-secondary small"> Magazzino</span>`;
+        ? ` <span class="pill warn">Macchina: ${j.machine_name}</span>`
+        : ` <span class="muted small"> Magazzino</span>`;
 
       const html = `
         <div>
-          <span class="badge ${az==='PRESO' ? 'bg-warning text-dark' : 'bg-success'}">${az}</span>
-          <strong class="font-monospace ms-2">${j.sku}</strong>
-          <span class="text-secondary">— ${j.name} — ${stato} — ${j.ts}</span>
+          <span class="pill ${az==='PRESO' ? 'warn' : 'ok'}">${az}</span>
+          <strong style="margin-left:8px;" class="mono">${j.sku}</strong>
+          <span class="muted">— ${j.name} — ${stato} — ${j.ts}</span>
           ${machineInfo}
           ${infoDays}
           ${warn}
@@ -161,26 +152,26 @@
 
     async function handleDecoded(sku){
       hideMachinePicker();
-      resEl.innerHTML = `<div class="text-secondary">Invio ${sku}...</div>`;
+      resEl.innerHTML = `<div class="muted">Invio ${sku}...</div>`;
 
       try{
         const { r, j } = await callScan({ sku, mode: modeEl.value });
 
         if(r.status === 409 && j.need_machine){
-          resEl.innerHTML = `<div>${pill(false,"SERVE MACCHINA")} <span class="text-secondary">${j.message}</span></div>`;
+          resEl.innerHTML = `<div>${pill(false,"SERVE MACCHINA")} <span class="muted">${j.message}</span></div>`;
           showMachinePicker(sku, j.machines || []);
           return;
         }
 
         if(!r.ok){
-          const html = `<div>${pill(false, "ERRORE")} <span class="text-secondary">${j.error || "Errore"}</span></div>`;
+          const html = `<div>${pill(false, "ERRORE")} <span class="muted">${j.error || "Errore"}</span></div>`;
           resEl.innerHTML = html;
           lastEl.innerHTML = html;
         } else {
           renderOk(j);
         }
       } catch(e){
-        const html = `<div>${pill(false,"ERRORE")} <span class="text-secondary">${e}</span></div>`;
+        const html = `<div>${pill(false,"ERRORE")} <span class="muted">${e}</span></div>`;
         resEl.innerHTML = html;
         lastEl.innerHTML = html;
       }
@@ -190,16 +181,16 @@
       if(!pending) return;
       const machine_id = parseInt(machineSelect.value, 10);
       if(!machine_id){
-        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="text-secondary">Seleziona una macchina.</span></div>`;
+        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Seleziona una macchina.</span></div>`;
         return;
       }
 
-      resEl.innerHTML = `<div class="text-secondary">Registro PRESO con macchina...</div>`;
+      resEl.innerHTML = `<div class="muted">Registro PRESO con macchina...</div>`;
       try{
         const { r, j } = await callScan({ sku: pending.sku, mode: pending.mode, machine_id });
 
         if(!r.ok){
-          const html = `<div>${pill(false, "ERRORE")} <span class="text-secondary">${j.error || "Errore"}</span></div>`;
+          const html = `<div>${pill(false, "ERRORE")} <span class="muted">${j.error || "Errore"}</span></div>`;
           resEl.innerHTML = html;
           lastEl.innerHTML = html;
         } else {
@@ -207,7 +198,7 @@
           hideMachinePicker();
         }
       } catch(e){
-        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="text-secondary">${e}</span></div>`;
+        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">${e}</span></div>`;
       }
     });
 
@@ -232,7 +223,7 @@
     ).catch(() => {
       Html5Qrcode.getCameras().then(cameras => {
         if(!cameras || cameras.length === 0){
-          resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="text-secondary">Nessuna fotocamera trovata.</span></div>`;
+          resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Nessuna fotocamera trovata.</span></div>`;
           return;
         }
         const backCam = cameras.find(c => /back|rear|environment/i.test(c.label));
@@ -244,10 +235,10 @@
           onSuccess,
           onError
         ).catch(e => {
-          resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="text-secondary">Impossibile avviare la camera: ${e}</span></div>`;
+          resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Impossibile avviare la camera: ${e}</span></div>`;
         });
       }).catch(e => {
-        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="text-secondary">Errore camere: ${e}</span></div>`;
+        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Errore camere: ${e}</span></div>`;
       });
     });
   </script>

@@ -1,12 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
   <div class="card">
-    <div class="card-body">
-      <h1 class="h4 mb-2">Storico movimenti (ultimi {{ limit }})</h1>
-      <p class="text-secondary">Movimenti registrati: <strong>PRESO</strong> e <strong>RESO</strong>.</p>
+    <h1>Storico movimenti (ultimi {{ limit }})</h1>
+    <p class="muted">Movimenti registrati: <strong>PRESO</strong> e <strong>RESO</strong>.</p>
 
-      <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle mb-0">
+    <div class="table-wrap">
+      <table class="rtable">
         <thead>
           <tr>
             <th>Data</th>
@@ -20,37 +19,36 @@
         <tbody>
           {% for r in rows %}
             <tr>
-              <td data-label="Data" class="font-monospace">{{ r["ts"] | it_datetime }}</td>
+              <td data-label="Data" class="mono">{{ r["ts"] | it_datetime }}</td>
 
               <td data-label="Azione">
                 {% if r["action"] == "TAKE" %}
-                  <span class="badge bg-warning text-dark">PRESO</span>
+                  <span class="pill warn">PRESO</span>
                 {% else %}
-                  <span class="badge bg-success">RESO</span>
+                  <span class="pill ok">RESO</span>
                 {% endif %}
               </td>
 
               <td data-label="Tampone"><strong>{{ r["name"] }}</strong></td>
-              <td data-label="SKU" class="font-monospace text-secondary">{{ r["sku"] }}</td>
+              <td data-label="SKU" class="mono muted">{{ r["sku"] }}</td>
 
               <td data-label="Macchina">
                 {% if r["action"] == "TAKE" and r["machine_name"] %}
-                  <span class="badge bg-warning text-dark">{{ r["machine_name"] }}</span>
+                  <span class="pill warn">{{ r["machine_name"] }}</span>
                 {% else %}
-                  <span class="text-secondary small">Magazzino</span>
+                  <span class="muted small">Magazzino</span>
                 {% endif %}
               </td>
 
-              <td data-label="Note" class="text-secondary">{{ r["note"] }}</td>
+              <td data-label="Note" class="muted">{{ r["note"] }}</td>
             </tr>
           {% endfor %}
 
           {% if rows|length == 0 %}
-            <tr><td colspan="6" class="text-secondary">Nessun movimento.</td></tr>
+            <tr><td colspan="6" class="muted">Nessun movimento.</td></tr>
           {% endif %}
         </tbody>
-        </table>
-      </div>
+      </table>
     </div>
   </div>
 {% endblock %}

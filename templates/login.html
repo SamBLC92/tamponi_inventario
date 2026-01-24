@@ -1,20 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-  <div class="card mx-auto" style="max-width:520px;">
-    <div class="card-body">
-      <h1 class="h4 mb-2">Login</h1>
-      <p class="text-secondary">Inserisci la password per accedere al pannello admin e gestire tamponi e macchine.</p>
+  <div class="card" style="max-width:520px; margin:0 auto;">
+    <h1>Login</h1>
+    <p class="muted">Inserisci la password per accedere al pannello admin e gestire tamponi e macchine.</p>
 
-      <form method="post">
-        <input type="hidden" name="next" value="{{ next_url }}" />
-        <div class="mb-3">
-          <label class="form-label text-secondary small">Password</label>
-          <input name="password" type="password" class="form-control" placeholder="Password" required />
-        </div>
-        <div class="mt-3">
-          <button type="submit" class="btn btn-primary w-100">Accedi</button>
-        </div>
-      </form>
-    </div>
+    <form method="post">
+      <input type="hidden" name="next" value="{{ next_url }}" />
+      <label class="muted small">Password</label>
+      <input name="password" type="password" placeholder="Password" required />
+      <div style="margin-top:12px;">
+        <button type="submit">Accedi</button>
+      </div>
+    </form>
   </div>
 {% endblock %}
