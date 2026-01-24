@@ -3,10 +3,13 @@
   <div class="grid grid-2">
     <div class="card">
       <h1>Scansione con fotocamera</h1>
-      <p class="muted">
-        Soglie globali: <span class="pill warn">Avviso {{ global_warn_days }} gg in scadenza</span>
-        <span style="margin-left:6px;"><span class="pill err">Allarme {{ global_alarm_days }} gg superati</span></span>
-      </p>
+      <div class="muted">
+        <div>Soglie globali:</div>
+        <div class="pill-row">
+          <span class="pill warn">Avviso {{ global_warn_days }} gg in scadenza</span>
+          <span class="pill err">Allarme {{ global_alarm_days }} gg superati</span>
+        </div>
+      </div>
 
       <div class="row cols-2" style="margin-top:10px;">
         <div>
