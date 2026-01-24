@@ -52,14 +52,37 @@
       flex: 0 0 auto;
       text-align:center;
     }
+    .nav a.nav-logo{
+      padding:0;
+      border:0;
+      background:transparent;
+    }
     .nav a.active{ color:var(--text); background:rgba(255,255,255,.10); }
     .nav a.nav-auth{
       margin-left:auto;
       flex: 0 0 auto;
-      font-size:12px;
-      padding:6px 12px;
-      border-radius:999px;
+      width:36px;
+      height:36px;
+      padding:0;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       max-width:none;
+    }
+    .nav-gear{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .nav-gear svg{
+      width:18px;
+      height:18px;
+      fill:var(--muted);
+      display:block;
+    }
+    .nav a.nav-auth:hover .nav-gear svg{
+      fill:var(--text);
     }
 
     .card{
@@ -238,7 +261,13 @@
       <a class="{{ 'active' if request.path == '/admin' else '' }}" href="{{ url_for('admin_dashboard') }}">Pannello di controllo</a>
       <a class="nav-auth" href="{{ url_for('logout') }}">Logout</a>
     {% else %}
-      <a class="nav-auth" href="{{ url_for('login', next=request.path) }}">Login</a>
+      <a class="nav-auth" aria-label="Login" href="{{ url_for('login', next=request.path) }}">
+        <span class="nav-gear" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img" focusable="false">
+            <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.04 7.04 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.58.22-1.12.52-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.8 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.42 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .5.42h3.84a.5.5 0 0 0 .5-.42l.36-2.54c.58-.22 1.12-.52 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z"/>
+          </svg>
+        </span>
+      </a>
     {% endif %}
   </div>
 
