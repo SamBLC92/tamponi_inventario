@@ -5,6 +5,8 @@ from typing import Optional, Dict, Any, List, Callable, Tuple
 from functools import wraps
 import secrets
 import hmac
+import hashlib
+import json
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
@@ -40,6 +42,7 @@ SETTINGS_KEY_BARCODE_QUIET_ZONE = "barcode_quiet_zone"
 SETTINGS_KEY_BARCODE_FONT_SIZE = "barcode_font_size"
 SETTINGS_KEY_BARCODE_TEXT_DISTANCE = "barcode_text_distance"
 SETTINGS_KEY_BARCODE_WRITE_TEXT = "barcode_write_text"
+SETTINGS_KEY_BARCODE_SETTINGS_HASH = "barcode_settings_hash"
 
 # ✅ Password admin (imposta variabile ambiente ADMIN_PASSWORD)
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
@@ -145,6 +148,11 @@ def it_datetime(value: str) -> str:
         return value
 
 
+def compute_barcode_settings_hash(settings: Dict[str, Any]) -> str:
+    payload = json.dumps(settings, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def init_db() -> None:
     ensure_dir(LABELS_DIR)
     with connect() as con:
@@ -246,6 +254,20 @@ def init_db() -> None:
             "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
             (SETTINGS_KEY_BARCODE_WRITE_TEXT, "1" if DEFAULT_BARCODE_WRITE_TEXT else "0"),
         )
+        con.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (
+                SETTINGS_KEY_BARCODE_SETTINGS_HASH,
+                compute_barcode_settings_hash({
+                    "module_width": DEFAULT_BARCODE_MODULE_WIDTH,
+                    "module_height": DEFAULT_BARCODE_MODULE_HEIGHT,
+                    "quiet_zone": DEFAULT_BARCODE_QUIET_ZONE,
+                    "font_size": DEFAULT_BARCODE_FONT_SIZE,
+                    "text_distance": DEFAULT_BARCODE_TEXT_DISTANCE,
+                    "write_text": DEFAULT_BARCODE_WRITE_TEXT,
+                }),
+            ),
+        )
         con.commit()
 
 
@@ -339,6 +361,15 @@ def get_barcode_settings(con: sqlite3.Connection) -> Dict[str, Any]:
     }
 
 
+def get_barcode_settings_hash(con: sqlite3.Connection) -> str:
+    current = get_setting(con, SETTINGS_KEY_BARCODE_SETTINGS_HASH)
+    if current:
+        return current
+    computed = compute_barcode_settings_hash(get_barcode_settings(con))
+    set_setting(con, SETTINGS_KEY_BARCODE_SETTINGS_HASH, computed)
+    return computed
+
+
 def get_swab_by_sku(con: sqlite3.Connection, sku: str) -> Optional[sqlite3.Row]:
     return con.execute("SELECT * FROM swabs WHERE sku=?", (sku,)).fetchone()
 
@@ -369,11 +400,22 @@ def set_state(con: sqlite3.Connection, swab_id: int, in_stock: int, machine_id: 
 def ensure_label_png(sku: str) -> str:
     ensure_dir(LABELS_DIR)
     out_path = os.path.join(LABELS_DIR, f"{sku}.png")
-    if os.path.exists(out_path):
-        return out_path
+    hash_path = os.path.join(LABELS_DIR, f"{sku}.hash")
 
     with connect() as con:
         barcode_settings = get_barcode_settings(con)
+        settings_hash = get_barcode_settings_hash(con)
+
+    current_hash = None
+    if os.path.exists(hash_path):
+        with open(hash_path, "r", encoding="utf-8") as handle:
+            current_hash = handle.read().strip() or None
+
+    if os.path.exists(out_path) and current_hash == settings_hash:
+        return out_path
+
+    if os.path.exists(out_path):
+        os.remove(out_path)
 
     writer = ImageWriter()
     code = Code128(sku, writer=writer)
@@ -381,6 +423,8 @@ def ensure_label_png(sku: str) -> str:
         os.path.join(LABELS_DIR, sku),
         options=barcode_settings,
     )
+    with open(hash_path, "w", encoding="utf-8") as handle:
+        handle.write(settings_hash)
     return out_path
 
 
@@ -562,6 +606,15 @@ def admin_settings():
             set_setting(con, SETTINGS_KEY_BARCODE_FONT_SIZE, str(font_size))
             set_setting(con, SETTINGS_KEY_BARCODE_TEXT_DISTANCE, str(text_distance))
             set_setting(con, SETTINGS_KEY_BARCODE_WRITE_TEXT, raw_write_text)
+            barcode_hash = compute_barcode_settings_hash({
+                "module_width": module_width,
+                "module_height": module_height,
+                "quiet_zone": quiet_zone,
+                "font_size": font_size,
+                "text_distance": text_distance,
+                "write_text": raw_write_text == "1",
+            })
+            set_setting(con, SETTINGS_KEY_BARCODE_SETTINGS_HASH, barcode_hash)
             con.commit()
             flash("Impostazioni aggiornate.", "ok")
             return redirect(url_for("admin_settings"))
