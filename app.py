@@ -1,7 +1,5 @@
-import json
 import os
 import sqlite3
-import stat
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List, Callable, Tuple
 from functools import wraps
@@ -36,44 +34,11 @@ BARCODE_FONT_SIZE = 9
 BARCODE_TEXT_DISTANCE = 1.5
 BARCODE_WRITE_TEXT = False
 
-CONFIG_FILENAME = "appsettings.local.json"
-CONFIG_PATH = os.environ.get("APPSETTINGS_PATH", os.path.join(APP_DIR, CONFIG_FILENAME))
-
-
-def ensure_secure_config(path: str) -> None:
-    if os.name == "nt":
-        return
-    mode = os.stat(path).st_mode
-    if mode & (stat.S_IRWXG | stat.S_IRWXO):
-        raise RuntimeError(
-            f"Permessi troppo permissivi per {path}. Imposta almeno 600 (solo utente)."
-        )
-
-
-def load_local_config(path: str) -> Dict[str, Any]:
-    if not os.path.exists(path):
-        raise RuntimeError(
-            "Config locale mancante. Crea appsettings.local.json con admin_password "
-            "e flask_secret_key (vedi appsettings.example.json)."
-        )
-    ensure_secure_config(path)
-    with open(path, "r", encoding="utf-8") as handle:
-        config = json.load(handle)
-    if not isinstance(config, dict):
-        raise RuntimeError("Config locale non valida: atteso oggetto JSON.")
-    return config
-
-
-LOCAL_CONFIG = load_local_config(CONFIG_PATH)
-ADMIN_PASSWORD = (LOCAL_CONFIG.get("admin_password") or "").strip()
-if not ADMIN_PASSWORD:
-    raise RuntimeError("admin_password non configurata in appsettings.local.json.")
+# ✅ Password admin (imposta variabile ambiente ADMIN_PASSWORD)
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
 
 app = Flask(__name__)
-secret_key = (LOCAL_CONFIG.get("flask_secret_key") or "").strip()
-if not secret_key:
-    raise RuntimeError("flask_secret_key non configurata in appsettings.local.json.")
-app.secret_key = secret_key
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 
 
 # ---------------------------
