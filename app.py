@@ -568,7 +568,8 @@ def admin_settings():
             raw_quiet_zone = (request.form.get("barcode_quiet_zone") or "").strip()
             raw_font_size = (request.form.get("barcode_font_size") or "").strip()
             raw_text_distance = (request.form.get("barcode_text_distance") or "").strip()
-            raw_write_text = (request.form.get("barcode_write_text") or "0").strip()
+            write_text_values = request.form.getlist("barcode_write_text")
+            raw_write_text = (write_text_values[-1] if write_text_values else "0").strip()
             try:
                 warn_value = int(raw_warn)
                 alarm_value = int(raw_alarm)
