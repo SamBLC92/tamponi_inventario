@@ -12,10 +12,23 @@ Apri:
 - http(s)://<IP>:5000/swabs
 - http(s)://<IP>:5000/scan-camera
 
-## Password admin
-Imposta la variabile ambiente:
-- Windows (PowerShell): `setx ADMIN_PASSWORD "LaTuaPassword"` (poi riapri terminale)
-- Linux/macOS: `export ADMIN_PASSWORD="LaTuaPassword"`
+## Configurazione locale (admin)
+Crea un file `appsettings.local.json` (non versionato) partendo da `appsettings.example.json` e proteggilo con permessi 600:
+
+```bash
+cp appsettings.example.json appsettings.local.json
+chmod 600 appsettings.local.json
+```
+
+Puoi anche impostare un percorso alternativo con `APPSETTINGS_PATH`.
+
+Esempio di contenuto:
+```json
+{
+  "admin_password": "UnaPasswordForte",
+  "flask_secret_key": "StringaCasualeLunga"
+}
+```
 
 La gestione è protetta solo per:
 - aggiunta tampone (POST)
