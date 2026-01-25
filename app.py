@@ -27,12 +27,19 @@ SETTINGS_KEY_WARN_DAYS = "global_warn_days"
 SETTINGS_KEY_ALARM_DAYS = "global_alarm_days"
 
 # ✅ Barcode: più allungato e meno alto (etichette più basse)
-BARCODE_MODULE_WIDTH = 0.30
-BARCODE_MODULE_HEIGHT = 9.0
-BARCODE_QUIET_ZONE = 6.0
-BARCODE_FONT_SIZE = 9
-BARCODE_TEXT_DISTANCE = 1.5
-BARCODE_WRITE_TEXT = False
+DEFAULT_BARCODE_MODULE_WIDTH = 0.30
+DEFAULT_BARCODE_MODULE_HEIGHT = 9.0
+DEFAULT_BARCODE_QUIET_ZONE = 6.0
+DEFAULT_BARCODE_FONT_SIZE = 9
+DEFAULT_BARCODE_TEXT_DISTANCE = 1.5
+DEFAULT_BARCODE_WRITE_TEXT = False
+
+SETTINGS_KEY_BARCODE_MODULE_WIDTH = "barcode_module_width"
+SETTINGS_KEY_BARCODE_MODULE_HEIGHT = "barcode_module_height"
+SETTINGS_KEY_BARCODE_QUIET_ZONE = "barcode_quiet_zone"
+SETTINGS_KEY_BARCODE_FONT_SIZE = "barcode_font_size"
+SETTINGS_KEY_BARCODE_TEXT_DISTANCE = "barcode_text_distance"
+SETTINGS_KEY_BARCODE_WRITE_TEXT = "barcode_write_text"
 
 # ✅ Password admin (imposta variabile ambiente ADMIN_PASSWORD)
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
@@ -215,6 +222,30 @@ def init_db() -> None:
             "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
             (SETTINGS_KEY_ALARM_DAYS, str(DEFAULT_GLOBAL_ALARM_DAYS)),
         )
+        con.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (SETTINGS_KEY_BARCODE_MODULE_WIDTH, str(DEFAULT_BARCODE_MODULE_WIDTH)),
+        )
+        con.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (SETTINGS_KEY_BARCODE_MODULE_HEIGHT, str(DEFAULT_BARCODE_MODULE_HEIGHT)),
+        )
+        con.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (SETTINGS_KEY_BARCODE_QUIET_ZONE, str(DEFAULT_BARCODE_QUIET_ZONE)),
+        )
+        con.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (SETTINGS_KEY_BARCODE_FONT_SIZE, str(DEFAULT_BARCODE_FONT_SIZE)),
+        )
+        con.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (SETTINGS_KEY_BARCODE_TEXT_DISTANCE, str(DEFAULT_BARCODE_TEXT_DISTANCE)),
+        )
+        con.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (SETTINGS_KEY_BARCODE_WRITE_TEXT, "1" if DEFAULT_BARCODE_WRITE_TEXT else "0"),
+        )
         con.commit()
 
 
@@ -242,12 +273,70 @@ def get_positive_setting(con: sqlite3.Connection, key: str, default: int) -> int
     return value
 
 
+def get_positive_float_setting(con: sqlite3.Connection, key: str, default: float) -> float:
+    raw = get_setting(con, key)
+    try:
+        value = float(raw) if raw is not None else default
+    except (TypeError, ValueError):
+        value = default
+    if value <= 0:
+        value = default
+    return value
+
+
+def get_boolean_setting(con: sqlite3.Connection, key: str, default: bool) -> bool:
+    raw = get_setting(con, key)
+    if raw is None:
+        return default
+    normalized = str(raw).strip().lower()
+    if normalized in ("1", "true", "yes", "on"):
+        return True
+    if normalized in ("0", "false", "no", "off"):
+        return False
+    return default
+
+
 def get_global_warn_days(con: sqlite3.Connection) -> int:
     return get_positive_setting(con, SETTINGS_KEY_WARN_DAYS, DEFAULT_GLOBAL_WARN_DAYS)
 
 
 def get_global_alarm_days(con: sqlite3.Connection) -> int:
     return get_positive_setting(con, SETTINGS_KEY_ALARM_DAYS, DEFAULT_GLOBAL_ALARM_DAYS)
+
+
+def get_barcode_settings(con: sqlite3.Connection) -> Dict[str, Any]:
+    return {
+        "module_width": get_positive_float_setting(
+            con,
+            SETTINGS_KEY_BARCODE_MODULE_WIDTH,
+            DEFAULT_BARCODE_MODULE_WIDTH,
+        ),
+        "module_height": get_positive_float_setting(
+            con,
+            SETTINGS_KEY_BARCODE_MODULE_HEIGHT,
+            DEFAULT_BARCODE_MODULE_HEIGHT,
+        ),
+        "quiet_zone": get_positive_float_setting(
+            con,
+            SETTINGS_KEY_BARCODE_QUIET_ZONE,
+            DEFAULT_BARCODE_QUIET_ZONE,
+        ),
+        "font_size": get_positive_setting(
+            con,
+            SETTINGS_KEY_BARCODE_FONT_SIZE,
+            DEFAULT_BARCODE_FONT_SIZE,
+        ),
+        "text_distance": get_positive_float_setting(
+            con,
+            SETTINGS_KEY_BARCODE_TEXT_DISTANCE,
+            DEFAULT_BARCODE_TEXT_DISTANCE,
+        ),
+        "write_text": get_boolean_setting(
+            con,
+            SETTINGS_KEY_BARCODE_WRITE_TEXT,
+            DEFAULT_BARCODE_WRITE_TEXT,
+        ),
+    }
 
 
 def get_swab_by_sku(con: sqlite3.Connection, sku: str) -> Optional[sqlite3.Row]:
@@ -283,18 +372,14 @@ def ensure_label_png(sku: str) -> str:
     if os.path.exists(out_path):
         return out_path
 
+    with connect() as con:
+        barcode_settings = get_barcode_settings(con)
+
     writer = ImageWriter()
     code = Code128(sku, writer=writer)
     code.save(
         os.path.join(LABELS_DIR, sku),
-        options={
-            "module_width": BARCODE_MODULE_WIDTH,
-            "module_height": BARCODE_MODULE_HEIGHT,
-            "quiet_zone": BARCODE_QUIET_ZONE,
-            "font_size": BARCODE_FONT_SIZE,
-            "text_distance": BARCODE_TEXT_DISTANCE,
-            "write_text": BARCODE_WRITE_TEXT,
-        },
+        options=barcode_settings,
     )
     return out_path
 
@@ -434,6 +519,12 @@ def admin_settings():
         if request.method == "POST":
             raw_warn = (request.form.get("global_warn_days") or "").strip()
             raw_alarm = (request.form.get("global_alarm_days") or "").strip()
+            raw_module_width = (request.form.get("barcode_module_width") or "").strip()
+            raw_module_height = (request.form.get("barcode_module_height") or "").strip()
+            raw_quiet_zone = (request.form.get("barcode_quiet_zone") or "").strip()
+            raw_font_size = (request.form.get("barcode_font_size") or "").strip()
+            raw_text_distance = (request.form.get("barcode_text_distance") or "").strip()
+            raw_write_text = (request.form.get("barcode_write_text") or "0").strip()
             try:
                 warn_value = int(raw_warn)
                 alarm_value = int(raw_alarm)
@@ -441,22 +532,48 @@ def admin_settings():
                     raise ValueError("Valore non valido")
                 if warn_value >= alarm_value:
                     raise ValueError("Soglie non valide")
+                module_width = float(raw_module_width)
+                module_height = float(raw_module_height)
+                quiet_zone = float(raw_quiet_zone)
+                font_size = int(raw_font_size)
+                text_distance = float(raw_text_distance)
+                if (
+                    module_width <= 0
+                    or module_height <= 0
+                    or quiet_zone <= 0
+                    or font_size <= 0
+                    or text_distance <= 0
+                ):
+                    raise ValueError("Parametri barcode non validi")
+                if raw_write_text not in ("0", "1"):
+                    raise ValueError("Parametro testo barcode non valido")
             except ValueError:
-                flash("Inserisci soglie valide (interi positivi, avviso < allarme).", "error")
+                flash(
+                    "Inserisci soglie valide (interi positivi, avviso < allarme) e parametri barcode corretti.",
+                    "error",
+                )
                 return redirect(url_for("admin_settings"))
 
             set_setting(con, SETTINGS_KEY_WARN_DAYS, str(warn_value))
             set_setting(con, SETTINGS_KEY_ALARM_DAYS, str(alarm_value))
+            set_setting(con, SETTINGS_KEY_BARCODE_MODULE_WIDTH, str(module_width))
+            set_setting(con, SETTINGS_KEY_BARCODE_MODULE_HEIGHT, str(module_height))
+            set_setting(con, SETTINGS_KEY_BARCODE_QUIET_ZONE, str(quiet_zone))
+            set_setting(con, SETTINGS_KEY_BARCODE_FONT_SIZE, str(font_size))
+            set_setting(con, SETTINGS_KEY_BARCODE_TEXT_DISTANCE, str(text_distance))
+            set_setting(con, SETTINGS_KEY_BARCODE_WRITE_TEXT, raw_write_text)
             con.commit()
-            flash("Soglie globali aggiornate.", "ok")
+            flash("Impostazioni aggiornate.", "ok")
             return redirect(url_for("admin_settings"))
 
         warn_days = get_global_warn_days(con)
         alarm_days = get_global_alarm_days(con)
+        barcode_settings = get_barcode_settings(con)
     return render_template(
         "admin_settings.html",
         global_warn_days=warn_days,
         global_alarm_days=alarm_days,
+        barcode_settings=barcode_settings,
     )
 
 
