@@ -3,7 +3,7 @@
   <div class="grid grid-2">
     <div class="card">
       <h1>Nuovo tampone</h1>
-      <form method="post">
+      <form method="post" autocomplete="off">
         <input type="hidden" name="action" value="add" />
         <label class="muted small">SKU</label>
         <input name="sku" placeholder="es. TB-0001" required />
@@ -18,7 +18,7 @@
     <div class="card">
       <h1>Lista tamponi (Admin)</h1>
 
-      <form method="get" style="margin-top:10px;">
+      <form method="get" style="margin-top:10px;" autocomplete="off">
         <label class="muted small" for="swab-search-admin">Cerca</label>
         <input id="swab-search-admin" name="q" placeholder="Cerca per Nome o Macchina" value="{{ q }}" />
       </form>
@@ -88,11 +88,11 @@
 
                 <td data-label="Azioni">
                   <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                    <form method="get" action="{{ url_for('swab_edit', swab_id=r['id']) }}" style="margin:0;">
+                    <form method="get" action="{{ url_for('swab_edit', swab_id=r['id']) }}" style="margin:0;" autocomplete="off">
                       <button type="submit">Modifica</button>
                     </form>
 
-                    <form method="post" action="{{ url_for('swab_delete', swab_id=r['id']) }}" style="margin:0;"
+                    <form method="post" action="{{ url_for('swab_delete', swab_id=r['id']) }}" style="margin:0;" autocomplete="off"
                           onsubmit="return confirm('Eliminare definitivamente questo tampone?');">
                       <button type="submit">Elimina</button>
                     </form>

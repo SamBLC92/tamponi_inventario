@@ -3,7 +3,7 @@
   <div class="grid grid-2">
     <div class="card">
       <h1>Nuova macchina</h1>
-      <form method="post">
+      <form method="post" autocomplete="off">
         <input type="hidden" name="action" value="add" />
         <label class="muted small">Nome macchina</label>
         <input name="name" placeholder="es. CNC 01" required />
@@ -29,7 +29,7 @@
               <tr>
                 <td data-label="Macchina"><strong>{{ m.name }}</strong></td>
                 <td data-label="Azioni">
-                  <form method="post" style="margin:0;">
+                  <form method="post" style="margin:0;" autocomplete="off">
                     <input type="hidden" name="action" value="delete" />
                     <input type="hidden" name="id" value="{{ m.id }}" />
                     <button type="submit" onclick="return confirm('Eliminare questa macchina?');">Elimina</button>
