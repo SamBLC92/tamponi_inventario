@@ -36,9 +36,11 @@ BARCODE_WRITE_TEXT = False
 
 # ✅ Password admin (imposta variabile ambiente ADMIN_PASSWORD)
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
+START_URL = os.environ.get("START_URL", "https://localhost:8086")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60 * 24
 
 
 # ---------------------------
@@ -826,7 +828,11 @@ def label_png(sku: str):
 
 
 if __name__ == "__main__":
+    import threading
+    import webbrowser
+
     init_db()
     ensure_dir(LABELS_DIR)
     # accessibile da LAN: host="0.0.0.0" (se vuoi)
+    threading.Timer(1.5, lambda: webbrowser.open(START_URL, new=2)).start()
     app.run(host="0.0.0.0", port=8086, debug=False, ssl_context=(ssl_cert, ssl_file))
