@@ -40,6 +40,7 @@ START_URL = os.environ.get("START_URL", "https://localhost:8086")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60 * 24
 
 
 # ---------------------------
