@@ -3,8 +3,8 @@
 Web app Flask + SQLite per gestione **tamponi** con barcode, presi/resi, macchina su PRESO, conteggio giorni unici d'uso.
 
 ## TamponiInventario WPF (desktop)
-Per requisiti, dipendenze e istruzioni di installazione/publish della versione desktop WPF, vedi:
-`TamponiInventario.Wpf/INSTALLATION.md`.
+La versione desktop WPF non è presente in questo repository: va creata ex-novo e poi documentata in un
+`INSTALLATION.md` dedicato.
 
 ## Avvio
 ```bash
