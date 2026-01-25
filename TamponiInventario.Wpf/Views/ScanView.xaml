@@ -47,12 +47,91 @@
         <Border Margin="0,16,0,0" Background="#F1F5F9" CornerRadius="12" Padding="12">
           <TextBlock Text="{Binding ResultMessage}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
         </Border>
+
+        <Border Margin="0,16,0,0" Background="#F8FAFC" CornerRadius="16" Padding="12">
+          <StackPanel>
+            <TextBlock Text="Librerie barcode/QR" FontWeight="SemiBold" />
+            <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding BarcodeLibraries}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Margin="0,0,0,6">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Notes}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="Librerie camera/webcam" FontWeight="SemiBold" Margin="0,12,0,0" />
+            <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding CameraLibraries}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Margin="0,0,0,6">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Notes}" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
       </StackPanel>
     </Border>
 
     <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" Margin="8,0,0,0">
       <StackPanel>
-        <TextBlock Text="Ultimo esito" FontSize="20" FontWeight="Bold" />
+        <TextBlock Text="Preview camera" FontSize="20" FontWeight="Bold" />
+        <TextBlock Text="{Binding CameraStatus}" Style="{StaticResource MutedTextStyle}" Margin="0,6,0,0" TextWrapping="Wrap" />
+
+        <Border Margin="0,16,0,0" BorderBrush="#CBD5F0" BorderThickness="1" CornerRadius="16" Padding="12" Background="#EEF2FF">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Anteprima stream" FontWeight="SemiBold" />
+            <Border Grid.Row="1" Margin="0,10,0,0" Background="#E2E8F0" CornerRadius="12" Height="220">
+              <Grid>
+                <TextBlock Text="Collega una webcam e avvia la camera per vedere lo stream."
+                           Style="{StaticResource MutedTextStyle}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           VerticalAlignment="Center"
+                           Margin="16,0" />
+              </Grid>
+            </Border>
+          </Grid>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+          <Button Content="Avvia camera" Padding="10,6" Command="{Binding StartCameraCommand}" />
+          <Button Content="Stop" Margin="8,0,0,0" Padding="10,6" Command="{Binding StopCameraCommand}" />
+          <Button Content="Simula decodifica" Margin="8,0,0,0" Padding="10,6" Command="{Binding SimulateDecodeCommand}" />
+        </StackPanel>
+
+        <Border Margin="0,16,0,0" Background="#F1F5F9" CornerRadius="16" Padding="12">
+          <StackPanel>
+            <TextBlock Text="Risultato decodifica" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding DecodedSku}" FontSize="16" FontWeight="Bold" Margin="0,6,0,0" />
+            <TextBlock Text="{Binding DecodedFormat}" Style="{StaticResource MutedTextStyle}" />
+            <Button Content="Usa risultato per PRESO/RESO" Margin="0,10,0,0" Padding="10,6" Command="{Binding ApplyDecodedCommand}" />
+          </StackPanel>
+        </Border>
+
+        <Border Margin="0,16,0,0" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16" Padding="12">
+          <StackPanel>
+            <TextBlock Text="Fallback manuale" FontWeight="SemiBold" />
+            <TextBlock Text="Se la camera non decodifica, inserisci lo SKU manualmente."
+                       Style="{StaticResource MutedTextStyle}"
+                       TextWrapping="Wrap"
+                       Margin="0,6,0,0" />
+            <TextBox Margin="0,8,0,0" Text="{Binding ManualSkuInput, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Content="Registra manualmente" Margin="0,8,0,0" Padding="10,6" Command="{Binding ManualSendCommand}" />
+          </StackPanel>
+        </Border>
+
+        <TextBlock Text="Ultimo esito" FontSize="20" FontWeight="Bold" Margin="0,20,0,0" />
         <TextBlock Text="{Binding LastResult}" Style="{StaticResource MutedTextStyle}" Margin="0,6,0,0" TextWrapping="Wrap" />
 
         <Border Margin="0,16,0,0" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16" Padding="12"
