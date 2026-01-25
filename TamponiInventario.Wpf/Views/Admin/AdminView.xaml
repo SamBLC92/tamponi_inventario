@@ -16,7 +16,9 @@
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,12">
                         <TextBox Width="140" Margin="0,0,8,0" Text="{Binding NewSwabSku}" />
                         <TextBox Width="220" Margin="0,0,8,0" Text="{Binding NewSwabName}" />
-                        <Button Content="Aggiungi tampone" Command="{Binding AddSwabCommand}" />
+                        <Button Content="Aggiungi tampone"
+                                Tag="AddSwabCommand"
+                                Click="AdminAction_Click" />
                         <StackPanel Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="Ricerca:" Margin="0,0,8,0" />
                             <TextBox Width="200" Text="{Binding SwabSearchQuery, UpdateSourceTrigger=PropertyChanged}" />
@@ -40,8 +42,15 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Modifica" Margin="0,0,8,0" Command="{Binding DataContext.EditSwabCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" />
-                                            <Button Content="Elimina" Command="{Binding DataContext.DeleteSwabCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" />
+                                            <Button Content="Modifica"
+                                                    Margin="0,0,8,0"
+                                                    Tag="EditSwabCommand"
+                                                    CommandParameter="{Binding}"
+                                                    Click="AdminAction_Click" />
+                                            <Button Content="Elimina"
+                                                    Tag="DeleteSwabCommand"
+                                                    CommandParameter="{Binding}"
+                                                    Click="AdminAction_Click" />
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -60,7 +69,9 @@
 
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,12">
                         <TextBox Width="220" Margin="0,0,8,0" Text="{Binding NewMachineName}" />
-                        <Button Content="Aggiungi macchina" Command="{Binding AddMachineCommand}" />
+                        <Button Content="Aggiungi macchina"
+                                Tag="AddMachineCommand"
+                                Click="AdminAction_Click" />
                     </StackPanel>
 
                     <DataGrid Grid.Row="1"
@@ -73,7 +84,10 @@
                             <DataGridTemplateColumn Header="Azioni" Width="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="Elimina" Command="{Binding DataContext.DeleteMachineCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" />
+                                        <Button Content="Elimina"
+                                                Tag="DeleteMachineCommand"
+                                                CommandParameter="{Binding}"
+                                                Click="AdminAction_Click" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -93,7 +107,10 @@
                         <TextBlock Text="Allarme:" Width="120" VerticalAlignment="Center" />
                         <TextBox Width="80" Text="{Binding GlobalAlarmDays}" />
                     </StackPanel>
-                    <Button Content="Salva" Width="120" Command="{Binding SaveSettingsCommand}" />
+                    <Button Content="Salva"
+                            Width="120"
+                            Tag="SaveSettingsCommand"
+                            Click="AdminAction_Click" />
                 </StackPanel>
             </TabItem>
         </TabControl>
