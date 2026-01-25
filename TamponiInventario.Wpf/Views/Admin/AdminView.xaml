@@ -1,0 +1,101 @@
+<UserControl x:Class="TamponiInventario.Wpf.Views.Admin.AdminView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Grid Margin="16">
+        <TabControl>
+            <TabItem Header="Tamponi">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,12">
+                        <TextBox Width="140" Margin="0,0,8,0" Text="{Binding NewSwabSku}" />
+                        <TextBox Width="220" Margin="0,0,8,0" Text="{Binding NewSwabName}" />
+                        <Button Content="Aggiungi tampone" Command="{Binding AddSwabCommand}" />
+                        <StackPanel Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Ricerca:" Margin="0,0,8,0" />
+                            <TextBox Width="200" Text="{Binding SwabSearchQuery, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Content="Filtra" Margin="8,0,0,0" Command="{Binding RefreshSwabsCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding Swabs}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="140" />
+                            <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="*" />
+                            <DataGridTextColumn Header="Stato" Binding="{Binding StatusLabel}" Width="100" />
+                            <DataGridTextColumn Header="Macchina" Binding="{Binding MachineName}" Width="160" />
+                            <DataGridTextColumn Header="Giorni correnti" Binding="{Binding CurrentDays}" Width="120" />
+                            <DataGridTextColumn Header="Giorni totali" Binding="{Binding TotalDays}" Width="120" />
+                            <DataGridTemplateColumn Header="Azioni" Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Modifica" Margin="0,0,8,0" Command="{Binding DataContext.EditSwabCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" />
+                                            <Button Content="Elimina" Command="{Binding DataContext.DeleteSwabCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Macchine">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,12">
+                        <TextBox Width="220" Margin="0,0,8,0" Text="{Binding NewMachineName}" />
+                        <Button Content="Aggiungi macchina" Command="{Binding AddMachineCommand}" />
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding Machines}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="*" />
+                            <DataGridTemplateColumn Header="Azioni" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Elimina" Command="{Binding DataContext.DeleteMachineCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Soglie">
+                <StackPanel Margin="12" Width="360">
+                    <TextBlock Text="Soglie globali (giorni)" FontSize="16" FontWeight="Bold" Margin="0,0,0,12" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Avviso:" Width="120" VerticalAlignment="Center" />
+                        <TextBox Width="80" Text="{Binding GlobalWarnDays}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <TextBlock Text="Allarme:" Width="120" VerticalAlignment="Center" />
+                        <TextBox Width="80" Text="{Binding GlobalAlarmDays}" />
+                    </StackPanel>
+                    <Button Content="Salva" Width="120" Command="{Binding SaveSettingsCommand}" />
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>
