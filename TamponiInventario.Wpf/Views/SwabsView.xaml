@@ -80,6 +80,13 @@
                 <DataGridTextColumn Header="Macchina" Binding="{Binding MachineName}" Width="180" />
                 <DataGridTextColumn Header="Giorni correnti" Binding="{Binding CurrentDays}" Width="120" />
                 <DataGridTextColumn Header="Giorni totali" Binding="{Binding TotalDays}" Width="120" />
+                <DataGridTemplateColumn Header="Etichetta" Width="140">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Stampa/Apri" Click="OpenLabel_Click" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="Segnalazioni" Width="140">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
