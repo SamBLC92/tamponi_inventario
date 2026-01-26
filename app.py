@@ -76,16 +76,15 @@ def inject_auth():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    next_url = request.args.get("next") or url_for("admin_dashboard")
     if request.method == "POST":
         pw = request.form.get("password", "")
         ok = hmac.compare_digest(pw, ADMIN_PASSWORD)
         if ok:
             session["admin_logged"] = True
             flash("Accesso effettuato.", "ok")
-            return redirect(request.form.get("next") or next_url)
+            return redirect(url_for("admin_dashboard"))
         flash("Password errata.", "error")
-    return render_template("login.html", next_url=next_url)
+    return render_template("login.html")
 
 
 @app.route("/logout")
