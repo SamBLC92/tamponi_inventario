@@ -81,9 +81,14 @@
                 </td>
 
                 <td data-label="Barcode">
-                  <a href="{{ url_for('label_png', sku=r['sku']) }}" target="_blank">
-                    <span class="pill ok">Apri PNG</span>
-                  </a>
+                  <div class="pill-row">
+                    <a href="{{ url_for('label_png', sku=r['sku']) }}" target="_blank" rel="noopener">
+                      <span class="pill ok">Apri PNG</span>
+                    </a>
+                    <a href="{{ url_for('label_print', sku=r['sku']) }}" target="_blank" rel="noopener">
+                      <span class="pill ok">🖨️ Stampa</span>
+                    </a>
+                  </div>
                 </td>
 
                 <td data-label="Azioni">
