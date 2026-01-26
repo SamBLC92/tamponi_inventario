@@ -3,11 +3,11 @@
 {% block content %}
   <div class="card">
     <h1>Pannello di controllo</h1>
-    <p class="muted">Gestione amministrativa di tamponi e macchine.</p>
+    <p class="muted">Gestione amministrativa di tamponi e macchine e parametri vari.</p>
     <div class="row cols-2">
       <a class="card" href="{{ url_for('admin_swabs') }}">Gestione tamponi</a>
       <a class="card" href="{{ url_for('admin_machines') }}">Gestione macchine</a>
-      <a class="card" href="{{ url_for('admin_settings') }}">Impostazioni soglia</a>
+      <a class="card" href="{{ url_for('admin_settings') }}">Impostazioni generali</a>
     </div>
   </div>
 {% endblock %}
