@@ -997,6 +997,27 @@ def label_png(sku: str):
     return send_file(path, mimetype="image/png", as_attachment=False)
 
 
+@app.route("/label/<sku>/print")
+def label_print(sku: str):
+    init_db()
+    sku = (sku or "").strip()
+    if not sku:
+        return "SKU non valido", 400
+
+    with connect() as con:
+        sw = get_swab_by_sku(con, sku)
+        if not sw:
+            return "SKU non trovato", 404
+
+    ensure_label_png(sku)
+    return render_template(
+        "label_print.html",
+        sku=sku,
+        swab_name=sw["name"],
+        label_url=url_for("label_png", sku=sku),
+    )
+
+
 if __name__ == "__main__":
     import threading
     import webbrowser
