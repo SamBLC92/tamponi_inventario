@@ -81,7 +81,7 @@
         required
       />
       <input type="hidden" name="barcode_write_text" value="0" />
-      <div style="margin-top:12px; display:flex; gap:6px; align-items:center;">
+      <div style="margin-top:12px; display:flex; gap:6px; align-items:center; justify-content: center;">
         <label for="barcode-write-text" style="margin:0;">
           Mostra testo sotto il barcode
         </label>
@@ -90,6 +90,7 @@
           name="barcode_write_text"
           type="checkbox"
           value="1"
+          style="width: auto;"
           {% if barcode_settings.write_text %}checked{% endif %}
         />
       </div>
