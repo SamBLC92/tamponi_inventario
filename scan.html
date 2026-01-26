@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="grid grid-2">
+    <div class="card">
+      <h1>Scansione</h1>
+      <div class="muted">
+        <div>Soglie globali:</div>
+        <div class="pill-row">
+          <span class="pill warn">Avviso {{ global_warn_days }} gg in scadenza</span>
+          <span class="pill err">Allarme {{ global_alarm_days }} gg superati</span>
+        </div>
+      </div>
+
+      <div class="row cols-2" style="margin-top:10px;">
+        <div>
+          <label class="muted small">Modalità</label>
+          <select id="mode">
+            <option value="TOGGLE" selected>TOGGLE (preso/reso)</option>
+            <option value="TAKE">PRESO (forza)</option>
+            <option value="RETURN">RESO (forza)</option>
+          </select>
+        </div>
+        <div>
+          <label class="muted small">SKU (scanner)</label>
+          <input id="sku" placeholder="Scansiona qui..." autocomplete="off" autofocus />
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button id="btn">Invia</button>
+      </div>
+
+      <div id="result" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
+      <h1>Ultimo esito</h1>
+      <div id="last" class="muted">Nessuna scansione ancora.</div>
+
+      <div id="machineBox" style="display:none; margin-top:14px; border:1px solid var(--line); border-radius:16px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+          <strong>Seleziona macchina</strong>
+          <span class="muted small" id="machineSku"></span>
+        </div>
+
+        <div style="margin-top:10px;">
+          <select id="machineSelect"></select>
+        </div>
+
+        <div style="margin-top:10px;">
+          <button id="machineConfirm">Conferma PRESO</button>
+          <button id="machineCancel" style="margin-top:8px;">Annulla</button>
+        </div>
+
+        <div class="muted small" style="margin-top:8px;">
+          Se la lista è vuota, vai su <strong>Macchine</strong> e aggiungile.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const skuEl = document.getElementById("sku");
+    const modeEl = document.getElementById("mode");
+    const resEl = document.getElementById("result");
+    const lastEl = document.getElementById("last");
+    const btn = document.getElementById("btn");
+
+    const machineBox = document.getElementById("machineBox");
+    const machineSelect = document.getElementById("machineSelect");
+    const machineConfirm = document.getElementById("machineConfirm");
+    const machineCancel = document.getElementById("machineCancel");
+    const machineSku = document.getElementById("machineSku");
+
+    let pending = null;
+
+    function pill(ok, text){
+      const cls = ok ? "pill ok" : "pill err";
+      return `<span class="${cls}">${text}</span>`;
+    }
+
+    function showMachinePicker(sku, machines){
+      pending = { sku, mode: modeEl.value };
+      machineSku.textContent = sku;
+
+      machineSelect.innerHTML = "";
+      for(const m of machines){
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        opt.textContent = m.name;
+        machineSelect.appendChild(opt);
+      }
+      machineBox.style.display = "block";
+    }
+
+    function hideMachinePicker(){
+      pending = null;
+      machineBox.style.display = "none";
+    }
+
+    async function callScan(payload){
+      const r = await fetch("/api/scan", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      const j = await r.json();
+      return { r, j };
+    }
+
+    function renderOk(j){
+      const stato = j.in_stock ? "RESO" : "PRESO";
+      const az = (j.action === "TAKE") ? "PRESO" : "RESO";
+
+      const warn = j.alarm
+        ? ` <span class="pill err">Allarme: oltre ${j.alarm_days} gg superati</span>`
+        : (j.warning ? ` <span class="pill warn">Avviso: oltre ${j.warn_days} gg in scadenza</span>` : "");
+      const infoDays = j.in_stock
+        ? (j.days_session ? ` <span class="pill ok">Sessione: ${j.days_session} gg</span>` : "")
+        : ` <span class="pill warn">Fuori da: ${j.current_days} gg</span>`;
+
+      const machineInfo = (!j.in_stock && j.machine_name)
+        ? ` <span class="pill warn">Macchina: ${j.machine_name}</span>`
+        : ` <span class="muted small"> Magazzino</span>`;
+
+      const html = `
+        <div>
+          <span class="pill ${az==='PRESO' ? 'warn' : 'ok'}">${az}</span>
+          <strong style="margin-left:8px;" class="mono">${j.sku}</strong>
+          <span class="muted">— ${j.name} — ${stato} — ${j.ts}</span>
+          ${machineInfo}
+          ${infoDays}
+          ${warn}
+        </div>
+      `;
+      resEl.innerHTML = html;
+      lastEl.innerHTML = html;
+    }
+
+    async function sendScan(){
+      const sku = skuEl.value.trim();
+      const mode = modeEl.value;
+      if(!sku) return;
+
+      hideMachinePicker();
+      resEl.innerHTML = `<div class="muted">Invio...</div>`;
+
+      try{
+        const { r, j } = await callScan({ sku, mode });
+
+        if(r.status === 409 && j.need_machine){
+          resEl.innerHTML = `<div>${pill(false,"SERVE MACCHINA")} <span class="muted">${j.message}</span></div>`;
+          showMachinePicker(sku, j.machines || []);
+          return;
+        }
+
+        if(!r.ok){
+          const html = `<div>${pill(false, "ERRORE")} <span class="muted">${j.error || "Errore"}</span></div>`;
+          resEl.innerHTML = html;
+          lastEl.innerHTML = html;
+        } else {
+          renderOk(j);
+        }
+      } catch(e){
+        const html = `<div>${pill(false,"ERRORE")} <span class="muted">${e}</span></div>`;
+        resEl.innerHTML = html;
+        lastEl.innerHTML = html;
+      }
+
+      skuEl.value = "";
+      skuEl.focus();
+    }
+
+    btn.addEventListener("click", sendScan);
+    skuEl.addEventListener("keydown", (ev) => {
+      if(ev.key === "Enter"){
+        ev.preventDefault();
+        sendScan();
+      }
+    });
+
+    machineConfirm.addEventListener("click", async () => {
+      if(!pending) return;
+      const machine_id = parseInt(machineSelect.value, 10);
+      if(!machine_id){
+        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">Seleziona una macchina.</span></div>`;
+        return;
+      }
+
+      resEl.innerHTML = `<div class="muted">Registro PRESO con macchina...</div>`;
+      try{
+        const { r, j } = await callScan({ sku: pending.sku, mode: pending.mode, machine_id });
+
+        if(!r.ok){
+          const html = `<div>${pill(false, "ERRORE")} <span class="muted">${j.error || "Errore"}</span></div>`;
+          resEl.innerHTML = html;
+          lastEl.innerHTML = html;
+        } else {
+          renderOk(j);
+          hideMachinePicker();
+        }
+      } catch(e){
+        resEl.innerHTML = `<div>${pill(false,"ERRORE")} <span class="muted">${e}</span></div>`;
+      }
+
+      skuEl.value = "";
+      skuEl.focus();
+    });
+
+    machineCancel.addEventListener("click", () => {
+      hideMachinePicker();
+      skuEl.focus();
+    });
+  </script>
+{% endblock %}
