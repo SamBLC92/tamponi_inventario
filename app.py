@@ -1018,6 +1018,32 @@ def label_print(sku: str):
     )
 
 
+@app.route("/labels/print", methods=["GET", "POST"])
+def labels_print():
+    init_db()
+    raw_skus = request.values.getlist("selected_skus")
+    selected_skus = [sku.strip() for sku in raw_skus if sku and sku.strip()]
+    if not selected_skus:
+        return "Nessuno SKU selezionato", 400
+
+    labels: List[Dict[str, str]] = []
+    with connect() as con:
+        for sku in selected_skus:
+            if not sku:
+                return "SKU non valido", 400
+            sw = get_swab_by_sku(con, sku)
+            if not sw:
+                return f"SKU non trovato: {sku}", 404
+            ensure_label_png(sku)
+            labels.append({
+                "sku": sku,
+                "name": sw["name"],
+                "label_url": url_for("label_png", sku=sku),
+            })
+
+    return render_template("labels_print.html", labels=labels)
+
+
 if __name__ == "__main__":
     import threading
     import webbrowser

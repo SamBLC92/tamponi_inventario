@@ -23,10 +23,17 @@
         <input id="swab-search-admin" name="q" placeholder="Cerca per Nome o Macchina" value="{{ q }}" />
       </form>
 
+      <form id="print-selected-form" method="get" action="{{ url_for('labels_print') }}" target="_blank" rel="noopener" autocomplete="off" style="margin-top:12px;">
+        <button type="submit">Stampa selezionati</button>
+      </form>
+
       <div class="table-wrap" style="margin-top:12px;">
         <table class="rtable">
           <thead>
             <tr>
+              <th>
+                <input type="checkbox" id="select-all-skus" aria-label="Seleziona tutti i tamponi" />
+              </th>
               <th>Tampone</th>
               <th>SKU</th>
               <th>Stato</th>
@@ -41,6 +48,9 @@
           <tbody>
             {% for r in rows %}
             <tr class="{% if r['alarm'] %}row-alarm{% elif r['warning'] %}row-warn{% endif %}">
+                <td data-label="Seleziona">
+                  <input type="checkbox" name="selected_skus" value="{{ r['sku'] }}" form="print-selected-form" aria-label="Seleziona {{ r['sku'] }}" />
+                </td>
                 <td data-label="Tampone"><strong>{{ r["name"] }}</strong></td>
                 <td data-label="SKU" class="mono muted">{{ r["sku"] }}</td>
 
@@ -107,7 +117,7 @@
             {% endfor %}
 
             {% if rows|length == 0 %}
-              <tr><td colspan="9" class="muted">Nessun tampone.</td></tr>
+              <tr><td colspan="10" class="muted">Nessun tampone.</td></tr>
             {% endif %}
           </tbody>
         </table>
@@ -118,4 +128,27 @@
       </div>
     </div>
   </div>
+  <script>
+    const selectAll = document.getElementById("select-all-skus");
+    const skuCheckboxes = document.querySelectorAll('input[name="selected_skus"]');
+
+    if (selectAll) {
+      selectAll.addEventListener("change", () => {
+        skuCheckboxes.forEach((checkbox) => {
+          checkbox.checked = selectAll.checked;
+        });
+      });
+    }
+
+    skuCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        const allChecked = Array.from(skuCheckboxes).every((item) => item.checked);
+        const anyChecked = Array.from(skuCheckboxes).some((item) => item.checked);
+        if (selectAll) {
+          selectAll.indeterminate = !allChecked && anyChecked;
+          selectAll.checked = allChecked;
+        }
+      });
+    });
+  </script>
 {% endblock %}
