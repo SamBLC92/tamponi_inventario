@@ -129,10 +129,11 @@ def iter_dates_inclusive(start_date, end_date):
 
 
 def calendar_days_between(start_iso: str, end_iso: str) -> int:
-    # inclusivo: stesso giorno => 1
-    a = parse_iso(start_iso).date()
-    b = parse_iso(end_iso).date()
-    return (b - a).days + 1
+    a_dt = parse_iso(start_iso)
+    b_dt = parse_iso(end_iso)
+    if a_dt.date() == b_dt.date() and (b_dt - a_dt) <= timedelta(hours=2):
+        return 0
+    return (b_dt.date() - a_dt.date()).days + 1
 
 
 def current_calendar_days(start_iso: str) -> int:
@@ -442,8 +443,12 @@ def total_unique_days(con: sqlite3.Connection, swab_id: int) -> int:
 
 
 def add_usage_days_for_range(con: sqlite3.Connection, swab_id: int, start_iso: str, end_iso: str) -> int:
-    a = parse_iso(start_iso).date()
-    b = parse_iso(end_iso).date()
+    a_dt = parse_iso(start_iso)
+    b_dt = parse_iso(end_iso)
+    if a_dt.date() == b_dt.date() and (b_dt - a_dt) <= timedelta(hours=2):
+        return 0
+    a = a_dt.date()
+    b = b_dt.date()
     before = con.total_changes
     for d in iter_dates_inclusive(a, b):
         con.execute(
