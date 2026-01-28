@@ -5,6 +5,7 @@
     <p class="muted">Aggiorna le soglie globali per i tamponi in uso: avviso per giorni in scadenza e allarme per giorni superati.</p>
 
     <form method="post" style="margin-top:12px;" autocomplete="off">
+      <input type="hidden" name="action" value="update_settings" />
       <label class="muted small" for="global-warn-days">Soglia globale avviso (giorni in scadenza)</label>
       <input
         id="global-warn-days"
@@ -96,6 +97,38 @@
       </div>
       <div style="margin-top:12px;">
         <button type="submit">Salva impostazioni</button>
+      </div>
+    </form>
+    <hr style="margin:20px 0;" />
+    <h2>Password admin</h2>
+    <p class="muted small">Aggiorna la password dell'area amministrativa.</p>
+    <form method="post" style="margin-top:12px;" autocomplete="off">
+      <input type="hidden" name="action" value="update_password" />
+      <label class="muted small" for="current-password">Password corrente</label>
+      <input
+        id="current-password"
+        name="current_password"
+        type="password"
+        required
+      />
+      <label class="muted small" for="new-password" style="margin-top:10px;">Nuova password</label>
+      <input
+        id="new-password"
+        name="new_password"
+        type="password"
+        minlength="8"
+        required
+      />
+      <label class="muted small" for="confirm-password" style="margin-top:10px;">Conferma nuova password</label>
+      <input
+        id="confirm-password"
+        name="confirm_password"
+        type="password"
+        minlength="8"
+        required
+      />
+      <div style="margin-top:12px;">
+        <button type="submit">Aggiorna password</button>
       </div>
     </form>
   </div>

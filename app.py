@@ -8,6 +8,7 @@ import hmac
 import hashlib
 import json
 
+from werkzeug.security import check_password_hash, generate_password_hash
 from flask import (
     Flask, render_template, request, redirect, url_for,
     send_file, jsonify, flash, session
@@ -43,6 +44,7 @@ SETTINGS_KEY_BARCODE_FONT_SIZE = "barcode_font_size"
 SETTINGS_KEY_BARCODE_TEXT_DISTANCE = "barcode_text_distance"
 SETTINGS_KEY_BARCODE_WRITE_TEXT = "barcode_write_text"
 SETTINGS_KEY_BARCODE_SETTINGS_HASH = "barcode_settings_hash"
+SETTINGS_KEY_ADMIN_PASSWORD_HASH = "admin_password_hash"
 
 # ✅ Password admin (imposta variabile ambiente ADMIN_PASSWORD)
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
@@ -77,13 +79,22 @@ def inject_auth():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    init_db()
     if request.method == "POST":
         pw = request.form.get("password", "")
-        ok = hmac.compare_digest(pw, ADMIN_PASSWORD)
-        if ok:
-            session["admin_logged"] = True
-            flash("Accesso effettuato.", "ok")
-            return redirect(url_for("admin_dashboard"))
+        with connect() as con:
+            current_hash = get_setting(con, SETTINGS_KEY_ADMIN_PASSWORD_HASH)
+            if current_hash:
+                ok = check_password_hash(current_hash, pw)
+            else:
+                ok = hmac.compare_digest(pw, ADMIN_PASSWORD)
+                if ok:
+                    set_setting(con, SETTINGS_KEY_ADMIN_PASSWORD_HASH, generate_password_hash(ADMIN_PASSWORD))
+                    con.commit()
+            if ok:
+                session["admin_logged"] = True
+                flash("Accesso effettuato.", "ok")
+                return redirect(url_for("admin_dashboard"))
         flash("Password errata.", "error")
     return render_template("login.html")
 
@@ -566,6 +577,30 @@ def admin_settings():
     init_db()
     with connect() as con:
         if request.method == "POST":
+            action = (request.form.get("action") or "update_settings").strip()
+            if action == "update_password":
+                current_password = request.form.get("current_password", "")
+                new_password = request.form.get("new_password", "")
+                confirm_password = request.form.get("confirm_password", "")
+                current_hash = get_setting(con, SETTINGS_KEY_ADMIN_PASSWORD_HASH)
+                if current_hash:
+                    current_ok = check_password_hash(current_hash, current_password)
+                else:
+                    current_ok = hmac.compare_digest(current_password, ADMIN_PASSWORD)
+                if not current_ok:
+                    flash("Password corrente errata.", "error")
+                    return redirect(url_for("admin_settings"))
+                if len(new_password) < 8:
+                    flash("La nuova password deve avere almeno 8 caratteri.", "error")
+                    return redirect(url_for("admin_settings"))
+                if new_password != confirm_password:
+                    flash("La conferma della password non coincide.", "error")
+                    return redirect(url_for("admin_settings"))
+                set_setting(con, SETTINGS_KEY_ADMIN_PASSWORD_HASH, generate_password_hash(new_password))
+                con.commit()
+                flash("Password admin aggiornata.", "ok")
+                return redirect(url_for("admin_settings"))
+
             raw_warn = (request.form.get("global_warn_days") or "").strip()
             raw_alarm = (request.form.get("global_alarm_days") or "").strip()
             raw_module_width = (request.form.get("barcode_module_width") or "").strip()
