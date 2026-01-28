@@ -19,7 +19,7 @@
       <h1>Lista tamponi</h1>
 
       <form method="get" style="margin-top:10px;" autocomplete="off">
-        <input id="swab-search-admin" name="q" placeholder="Cerca per Nome o Macchina" value="{{ q }}" />
+        <input id="swab-search-admin" class="swab-search" name="q" placeholder="Cerca per Nome o Macchina" value="{{ q }}" />
       </form>
 
       <form id="print-selected-form" method="get" action="{{ url_for('labels_print') }}" target="_blank" rel="noopener" autocomplete="off" style="display: flex;margin-top:12px;justify-content: space-between;border: 1px solid var(--line);border-radius: 12px;padding: 5px;align-items: center;">
